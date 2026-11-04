@@ -1,0 +1,1191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TrackAnything Manual</title>
+<style>
+  :root {
+    --bg: #ffffff; --fg: #1d2330; --muted: #5b6475; --line: #d9dee7; --panel: #f5f7fa;
+    --accent: #1e6fd9; --note: #1e6fd9; --caution: #9a5b00; --warning: #c62828; --code: #eef1f5;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f1218; --fg: #e3e7ee; --muted: #9aa3b2; --line: #2a313d; --panel: #161b23;
+      --accent: #5aa6ff; --note: #5aa6ff; --caution: #f0a83a; --warning: #ff6b6b; --code: #1b212b;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f1218; --fg: #e3e7ee; --muted: #9aa3b2; --line: #2a313d; --panel: #161b23;
+    --accent: #5aa6ff; --note: #5aa6ff; --caution: #f0a83a; --warning: #ff6b6b; --code: #1b212b;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 880px; margin: 0 auto; padding: 32px 16px 80px; }
+  h1 { font-size: 30px; line-height: 1.2; margin: 0 0 8px; }
+  h2 { font-size: 22px; margin: 48px 0 12px; padding-top: 12px; border-top: 1px solid var(--line); }
+  h3 { font-size: 18px; margin: 28px 0 8px; }
+  p, li { max-width: 72ch; }
+  a { color: var(--accent); }
+  .lead { color: var(--muted); font-size: 18px; margin: 0 0 24px; }
+  code, kbd { font: 14px ui-monospace, "SF Mono", Menlo, monospace; background: var(--code); padding: 1px 5px; border-radius: 4px; }
+  pre { background: var(--code); padding: 12px 14px; border-radius: 8px; overflow-x: auto; font: 14px/1.5 ui-monospace, "SF Mono", Menlo, monospace; }
+  pre code { background: none; padding: 0; }
+  p code, li code, td code { overflow-wrap: anywhere; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 15px; display: block; overflow-x: auto; }
+  th, td { text-align: left; vertical-align: top; padding: 7px 10px; border-bottom: 1px solid var(--line); }
+  th { background: var(--panel); font-weight: 600; }
+  td.n { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  figure { margin: 20px 0 28px; }
+  figure img, figure svg { display: block; width: 100%; max-width: 720px; height: auto; margin: 0 auto;
+                           border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
+  figure.narrow img { max-width: 300px; }
+  figcaption { max-width: 720px; margin: 8px auto 0; color: var(--muted); font-size: 14px; }
+  ol.steps > li { margin: 4px 0; }
+  .box { border-left: 4px solid var(--note); background: var(--panel); padding: 10px 14px; margin: 16px 0; border-radius: 0 6px 6px 0; }
+  ul.todo { list-style: none; padding-left: 0; }
+  ul.todo li { position: relative; padding-left: 28px; margin: 6px 0; }
+  ul.todo li::before { content: ""; position: absolute; left: 0; top: 3px; width: 14px; height: 14px; border: 2px solid var(--muted); border-radius: 3px; }
+  ul.todo li.done::before { content: "✓"; color: var(--bg); background: var(--accent); border-color: var(--accent); font-size: 12px; line-height: 14px; text-align: center; }
+  .box b { display: block; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; }
+  .box.note b { color: var(--note); }
+  .box.caution { border-color: var(--caution); } .box.caution b { color: var(--caution); }
+  .box.warning { border-color: var(--warning); } .box.warning b { color: var(--warning); }
+  .box p { margin: 4px 0; }
+  nav.toc { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 18px; }
+  nav.toc ol { margin: 6px 0; padding-left: 22px; columns: 2; column-gap: 32px; }
+  @media (max-width: 640px) { nav.toc ol { columns: 1; } h1 { font-size: 26px; } }
+  svg text { font: 13px system-ui, -apple-system, sans-serif; fill: var(--fg); }
+  svg .sub { font-size: 11px; fill: var(--muted); }
+  svg .blk { fill: var(--bg); stroke: var(--line); stroke-width: 1.5; }
+  svg .grp { fill: none; stroke: var(--muted); stroke-dasharray: 5 4; stroke-width: 1.2; }
+  svg .hot { fill: var(--bg); stroke: var(--accent); stroke-width: 2; }
+  svg .ln { stroke: var(--muted); stroke-width: 1.5; fill: none; }
+  svg .acc { stroke: var(--accent); stroke-width: 1.8; fill: none; }
+  svg .ttl { font-weight: 600; }
+</style>
+</head>
+<body>
+<main>
+
+<h1>TrackAnything manual</h1>
+<p class="lead">Video object tracking with EfficientTAM, SAM2.1 and SAM3. The software runs on spark2 (NVIDIA DGX Spark, GB10). You control it from a Mac.</p>
+
+<nav class="toc" aria-label="Contents">
+  <b>Contents</b>
+  <ol>
+    <li><a href="#overview">Overview</a></li>
+    <li><a href="#terms">Terms</a></li>
+    <li><a href="#system">System layout</a></li>
+    <li><a href="#requirements">Requirements</a></li>
+    <li><a href="#offline">Offline benchmark procedures</a></li>
+    <li><a href="#live">Live app procedures</a></li>
+    <li><a href="#tracking">How tracking works</a></li>
+    <li><a href="#datapath">Live data path</a></li>
+    <li><a href="#protocol">WebSocket messages</a></li>
+    <li><a href="#performance">Performance</a></li>
+    <li><a href="#troubleshooting">Troubleshooting</a></li>
+    <li><a href="#files">Files</a></li>
+    <li><a href="#limits">Limits and notes</a></li>
+    <li><a href="#references">References and applicable methods</a></li>
+  </ol>
+</nav>
+
+<h2 id="overview">1. Overview</h2>
+<p>TrackAnything follows objects through video. You select each object one time, with a point, a box or a name. The model then finds the same object in each new frame and marks its pixels. This marked area is the <em>mask</em>.</p>
+<p>The project has three tools:</p>
+<ul>
+  <li><b>Offline benchmark</b> (<code>track.py</code>). It tracks one or more objects through a video file. You select the objects on frame 0 with points, boxes or names. It measures the speed and writes a video with a mask in a different colour for each object.</li>
+  <li><b>Live app</b> (<code>live.py</code> and <code>live.html</code>). The Mac camera sends frames to spark2. spark2 tracks the objects. The browser on the Mac shows the masks on the live camera image.</li>
+  <li><b>Personal data removal</b> (<code>tools/anonymize.py</code> and <code>anonymize_spark2.sh</code>). It prepares a phone video for <code>data/</code>. It keeps the subject sharp, blurs the rest, and removes the metadata and the sound (5.5).</li>
+</ul>
+<p>The project has two sample videos in <code>data/</code>: <code>albatross.mp4</code> (two birds dance, public domain) and <code>garbage_cans.mp4</code> (two garbage cans, the camera moves round them). The tests, the benchmarks and the figures of the live app use <code>albatross.mp4</code>.</p>
+<p>In the live app, you can also type the names of the objects, for example "boy . red cup". A detector finds the objects in one frame, and the tracker follows them after that (6.5, 7.6).</p>
+<p>You manage the project on the Mac with uv. The scripts copy the project to spark2 and run it there. The Mac does not run the models.</p>
+<figure>
+  <img src="img/offline.jpg" alt="Four frames of two albatrosses dancing, with the left bird marked in blue" width="960" height="540">
+  <figcaption>Figure 1. Offline benchmark output, EfficientTAM-S, frames 0, 75, 150 and 299 of <code>data/albatross.mp4</code>. The prompt is one point on the left bird in frame 0. The mask follows the bird while it moves. In some frames, the mask does not include all of the dark wing.</figcaption>
+</figure>
+
+<h2 id="terms">2. Terms</h2>
+<p>This manual uses each term with one meaning only.</p>
+<table>
+  <tr><th>Term</th><th>Meaning</th></tr>
+  <tr><td>frame</td><td>One image from a video or from the camera.</td></tr>
+  <tr><td>prompt</td><td>Your selection of the object: one point (a click) or one box (a drag).</td></tr>
+  <tr><td>mask</td><td>The pixels that the model gives to the object in one frame.</td></tr>
+  <tr><td>logit</td><td>The model output for one mask cell. A logit above 0 means "object". A logit below 0 means "not object".</td></tr>
+  <tr><td>mask grid</td><td>The low-resolution grid of logits from the model: 128 × 128 (EfficientTAM), 256 × 256 (SAM2.1) or 288 × 288 (SAM3).</td></tr>
+  <tr><td>track</td><td>The sequence of masks for one or more objects, from the first prompt to the next new track or clear.</td></tr>
+  <tr><td>object number</td><td>The number of an object in a track, shown on its chip. An object keeps its number and its colour until the track ends, also when you remove a different object. A removed number is not used again in the same track.</td></tr>
+  <tr><td>picked object</td><td>The object that receives the correction points. Its chip in the <b>Selection</b> panel has a white border.</td></tr>
+  <tr><td>memory bank</td><td>The data from earlier frames that the model uses to find the object in the current frame.</td></tr>
+  <tr><td>correction point</td><td>A click that changes the mask of the current track. An "add" point puts an area into the mask. A "remove" point takes an area out of the mask.</td></tr>
+  <tr><td>prompt frame</td><td>The frame that receives the prompt. The model keeps it in the memory bank for the full track.</td></tr>
+  <tr><td>query</td><td>The text that you type in the <b>Find</b> field, for example <code>boy . red cup</code>. A dot, a comma or a semicolon separates the names.</td></tr>
+  <tr><td>detector</td><td>The model that finds boxes for the names in a query, in one frame. The live app uses LLMDet tiny.</td></tr>
+  <tr><td>label</td><td>The name from the query that the detector gives to one box.</td></tr>
+  <tr><td>score</td><td>The confidence of the detector for one box, from 0 to 1. The server keeps boxes with a score of 0.35 or more.</td></tr>
+  <tr><td>subject</td><td>In personal data removal: the objects that stay sharp, selected by their names.</td></tr>
+  <tr><td>personal data</td><td>Data that can identify a person or a place: location and device in the metadata, sound, license plates, house numbers and faces.</td></tr>
+  <tr><td>review sheet</td><td>An image with 12 frames of a video, made by the personal data removal for a check by a person.</td></tr>
+  <tr><td>server</td><td>The <code>live.py</code> process on spark2.</td></tr>
+  <tr><td>page</td><td>The live app in the Mac browser (<code>live.html</code>).</td></tr>
+  <tr><td>launcher</td><td>The script <code>live_spark2.sh</code> on the Mac.</td></tr>
+  <tr><td>viewer</td><td>A page that is connected to the server. The server accepts one viewer at a time.</td></tr>
+  <tr><td>origin</td><td>The site of a page: scheme, host and port, for example <code>http://localhost:8765</code>. The browser sends it in the <code>Origin</code> header of each WebSocket connection.</td></tr>
+</table>
+
+<h2 id="system">3. System layout</h2>
+<figure>
+<svg viewBox="0 0 720 300" role="img" aria-labelledby="f2t">
+  <title id="f2t">System layout: Mac with camera and page, SSH tunnel, spark2 with the server</title>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+  <g style="color: var(--muted)">
+  <rect class="grp" x="12" y="20" width="250" height="262" rx="10"/><text class="ttl" x="28" y="44">Mac</text>
+  <rect class="blk" x="32" y="58" width="210" height="44" rx="6"/><text x="46" y="85">Camera (getUserMedia)</text>
+  <path class="ln" d="M137 102 V126" marker-end="url(#ar)"/>
+  <rect class="hot" x="32" y="130" width="210" height="132" rx="6"/><text class="ttl" x="46" y="153">Page (live.html)</text>
+  <text class="sub" x="46" y="176">video preview, JPEG encode</text><text class="sub" x="46" y="196">WebGL2 mask shader</text>
+  <text class="sub" x="46" y="216">model picker</text><text class="sub" x="46" y="236">click, box and text input</text>
+  <rect class="blk" x="282" y="130" width="156" height="132" rx="6"/><text class="ttl" x="296" y="153">SSH tunnel</text>
+  <text class="sub" x="296" y="172">localhost:8765</text>
+  <text x="296" y="202" style="fill: var(--accent)">JPEG frame →</text>
+  <text x="296" y="238" style="fill: var(--accent)">← JSON + logits</text>
+  <path class="acc" d="M242 208 H278" marker-end="url(#ar)"/><path class="acc" d="M438 208 H470" marker-end="url(#ar)"/>
+  <path class="acc" d="M474 244 H442" marker-end="url(#ar)"/><path class="acc" d="M282 244 H246" marker-end="url(#ar)"/>
+  <rect class="grp" x="458" y="20" width="250" height="262" rx="10"/><text class="ttl" x="474" y="44">spark2 (GB10 GPU)</text>
+  <rect class="hot" x="474" y="58" width="218" height="204" rx="6"/><text class="ttl" x="488" y="81">Server (live.py)</text>
+  <text class="sub" x="488" y="100">127.0.0.1:8765, WebSocket</text>
+  <rect class="blk" x="486" y="110" width="194" height="30" rx="4"/><text x="496" y="130">1. nvJPEG decode</text>
+  <rect class="blk" x="486" y="146" width="194" height="30" rx="4" style="stroke-dasharray: 5 4"/><text x="496" y="166">2. Detector (query only)</text>
+  <rect class="blk" x="486" y="182" width="194" height="30" rx="4"/><text x="496" y="202">3. Tracker step</text>
+  <rect class="blk" x="486" y="218" width="194" height="30" rx="4"/><text x="496" y="238">4. Pack float16 logits</text>
+  </g>
+</svg>
+<figcaption>Figure 2. System layout. All traffic goes through one SSH tunnel. The server accepts connections from 127.0.0.1 only, and only from pages of <code>localhost</code> (9.3). The detector (dashed) runs only on the frame after a query.</figcaption>
+</figure>
+<table>
+  <tr><th>Part</th><th>Location</th><th>Function</th></tr>
+  <tr><td><code>live_spark2.sh</code></td><td>Mac</td><td>Copies the project to spark2, starts the server, opens the SSH tunnel and opens the page.</td></tr>
+  <tr><td><code>live.html</code></td><td>Mac browser</td><td>Shows the camera, sends frames, receives logits and draws the mask.</td></tr>
+  <tr><td><code>live.py</code></td><td>spark2</td><td>Decodes frames, runs the tracker and sends the mask grid back.</td></tr>
+  <tr><td>Detector (<code>detector.py</code>)</td><td>spark2 GPU</td><td>Finds boxes for names in one frame. The server loads it at the first query and keeps it in GPU memory. <code>track.py --text</code> and the personal data removal use it too.</td></tr>
+  <tr><td><code>run_spark2.sh</code></td><td>Mac</td><td>Copies the project to spark2, runs <code>track.py</code> and copies <code>results/</code> back.</td></tr>
+  <tr><td><code>track.py</code></td><td>spark2</td><td>Offline benchmark. It also contains <code>load_efficienttam()</code>, which <code>live.py</code> uses.</td></tr>
+  <tr><td><code>anonymize_spark2.sh</code></td><td>Mac</td><td>Copies a clip to a private directory on spark2, runs <code>tools/anonymize.py</code>, copies the result back and deletes the copy on spark2.</td></tr>
+  <tr><td><code>tools/anonymize.py</code></td><td>spark2</td><td>Removes personal data from a clip (5.5).</td></tr>
+</table>
+<p>The browser gives camera access only to pages from <code>localhost</code> or from HTTPS. The SSH tunnel makes the page a <code>localhost</code> page on the Mac. For this reason, do not open the page with the IP address of spark2.</p>
+
+<h2 id="requirements">4. Requirements</h2>
+<table>
+  <tr><th>Item</th><th>Requirement</th></tr>
+  <tr><td>spark2</td><td>SSH access with the host name <code>spark2</code>. To use a different host, set <code>HOST=&lt;name&gt;</code>.</td></tr>
+  <tr><td>uv on spark2</td><td>Installed at <code>~/.local/bin/uv</code>. The first run installs the environment. torch and torchvision come from the PyTorch cu130 index.</td></tr>
+  <tr><td>Mac tools</td><td><code>ssh</code>, <code>rsync</code> and <code>curl</code>. You do not need a Python environment on the Mac.</td></tr>
+  <tr><td>Browser</td><td>Chrome or Safari with WebGL2.</td></tr>
+  <tr><td>Detector</td><td>The checkpoint <code>iSEE-Laboratory/llmdet_tiny</code> (660 MB, Apache-2.0). The server downloads it at the first query. It needs no <code>HF_TOKEN</code>.</td></tr>
+  <tr><td>ffmpeg (personal data removal only)</td><td>spark2 has no <code>ffmpeg</code>. The launcher adds the package <code>imageio-ffmpeg</code> for the run. The first run downloads it (58 MB). The Mac does not need <code>ffmpeg</code>.</td></tr>
+  <tr><td>Second host (optional)</td><td>For parallel tests, a second GB10 host, for example <code>spark3</code>. Use <code>HOST=spark3</code> with the scripts. See 11 for two setup problems on a new host.</td></tr>
+  <tr><td>SAM3 only</td><td>An <code>HF_TOKEN</code> environment variable. The token must have access to the gated repository <code>facebook/sam3</code>.</td></tr>
+</table>
+<div class="box note"><b>Note</b><p>The scripts send <code>HF_TOKEN</code> to spark2 through standard input. The token is not in the command line, so <code>ps</code> on spark2 does not show it.</p></div>
+
+<h2 id="offline">5. Offline benchmark procedures</h2>
+<h3>5.1 Track objects in a video file</h3>
+<ol class="steps">
+  <li>Open a terminal on the Mac.</li>
+  <li>Go to the project folder: <code>cd ~/GWorkspace/TrackAnything</code>.</li>
+  <li>Find the pixel position of the object in frame 0 of your video.</li>
+  <li>Run the benchmark with a point prompt:
+    <pre><code>./run_spark2.sh data/albatross.mp4 --point 470,260 --out results/birds_s.mp4</code></pre></li>
+  <li>Read the FPS values in the output.</li>
+  <li>Open the output video in <code>results/</code>.</li>
+</ol>
+<p>Other examples:</p>
+<pre><code>./run_spark2.sh data/albatross.mp4 --point 470,260 --model ti --out results/birds_ti.mp4   # EfficientTAM-Ti
+./run_spark2.sh data/albatross.mp4 --point 470,260 --model sam3 --out results/birds_sam3.mp4 # SAM3 (needs HF_TOKEN)
+./run_spark2.sh my.mp4 --box 100,80,300,400 --runs 5 --no-compile --out results/my_box.mp4 # box prompt
+./run_spark2.sh data/albatross.mp4 --point 470,260 --box 570,172,788,330 --out results/two.mp4  # two objects
+./run_spark2.sh data/garbage_cans.mp4 --text "garbage can . trash can" --out results/cans.mp4 # text prompt</code></pre>
+<p>Each <code>--point</code> and each <code>--box</code> is one object, in the order that you give them. <code>--text</code> adds one object for each box that the detector finds on frame 0. You can use the three options together. The output video shows each object in a different colour.</p>
+<h3>5.2 Options of <code>track.py</code></h3>
+<table>
+  <tr><th>Option</th><th>Default</th><th>Function</th></tr>
+  <tr><td><code>VIDEO</code></td><td>(required)</td><td>Path of the input video.</td></tr>
+  <tr><td><code>--point x,y</code></td><td>—</td><td>Point prompt in frame-0 pixels: one object. Repeat the option for more objects.</td></tr>
+  <tr><td><code>--box x0,y0,x1,y1</code></td><td>—</td><td>Box prompt in frame-0 pixels: one object. Repeat the option for more objects.</td></tr>
+  <tr><td><code>--text "a . b"</code></td><td>—</td><td>Names for the detector (LLMDet tiny, 7.6) on frame 0. Each box that it finds becomes one object. The output lists each box with its score and pixels. You must give at least one <code>--point</code>, <code>--box</code> or <code>--text</code>.</td></tr>
+  <tr><td><code>--threshold</code></td><td>0.35</td><td>Minimum detector score for <code>--text</code>.</td></tr>
+  <tr><td><code>--fix FRAME:OBJ:x,y:+</code></td><td>none</td><td>Add point on object OBJ in frame FRAME. Use <code>-</code> in place of <code>+</code> for a remove point. The values are pixels in that frame. You can repeat it (5.7).</td></tr>
+  <tr><td><code>--fix-box FRAME:OBJ:x0,y0,x1,y1</code></td><td>none</td><td>New box for object OBJ in frame FRAME. You can repeat it (5.7).</td></tr>
+  <tr><td><code>--redetect N</code></td><td>none</td><td>Run the detector every N frames, with <code>--text</code>. It adds objects that come into the frame and ends the tracks of objects that go away (5.8). EfficientTAM only, one run.</td></tr>
+  <tr><td><code>--model</code></td><td><code>s</code></td><td><code>s</code> (EfficientTAM-S 512), <code>ti</code> (EfficientTAM-Ti 512) or <code>sam3</code>.</td></tr>
+  <tr><td><code>--runs</code></td><td>3</td><td>Number of timed runs. Run 0 includes warm-up and compilation.</td></tr>
+  <tr><td><code>--no-compile</code></td><td>off</td><td>Do not compile the EfficientTAM image encoder.</td></tr>
+  <tr><td><code>--out</code></td><td><code>out.mp4</code></td><td>Output video with the mask on each frame. Use a path in <code>results/</code>. The script copies only <code>results/</code> back to the Mac.</td></tr>
+</table>
+<p>FPS is the wall time of <code>propagate_in_video</code> over all frames. This time includes the model and the copy of each mask to the CPU. The benchmark uses bf16 autocast.</p>
+<p>The line <code>mask area: frame0 ..., min ..., max ...</code> gives the area of all objects together. With more than one object, the output also has one line for each object, with the number of frames in which its mask is empty.</p>
+<h3>5.3 Do a regression check</h3>
+<ol class="steps">
+  <li>Run <code>./run_spark2.sh data/albatross.mp4 --point 470,260</code>.</li>
+  <li>Find the line <code>mask area: frame0 ...</code> in the output.</li>
+  <li>Make sure that the value is approximately <code>3.03%</code>. The value changes a little from run to run (3.022% to 3.038% on spark2), because the compiled image encoder is not deterministic.</li>
+  <li>Make sure that the FPS of runs 1 and 2 is approximately 100.</li>
+</ol>
+
+<h3>5.4 Sample: garbage cans</h3>
+<p>The second sample video is <code>data/garbage_cans.mp4</code>: 720 × 1280 (portrait), 30 FPS, 321 frames (10.7 s). The camera moves around two garbage cans on a curb, a blue cart and a brown cart. The view changes from a side view to a front view, and the cans get larger in the frame. The background is blurred and the numbers on the carts are pixelated (5.5).</p>
+<p>To track one can, give a box on frame 0. Each run tracks one object.</p>
+<ol class="steps">
+  <li>Run <code>./run_spark2.sh data/garbage_cans.mp4 --box 248,617,392,785 --out results/garbage_cans_blue.mp4</code> for the blue cart.</li>
+  <li>Run <code>./run_spark2.sh data/garbage_cans.mp4 --box 392,624,498,761 --out results/garbage_cans_brown.mp4</code> for the brown cart.</li>
+  <li>Open the videos in <code>results/</code>.</li>
+</ol>
+<p>To track both cans in one run, do one of these steps:</p>
+<ul>
+  <li>Run <code>./run_spark2.sh data/garbage_cans.mp4 --box 248,617,392,785 --box 392,624,498,761 --out results/garbage_cans_two.mp4</code>.</li>
+  <li>Run <code>./run_spark2.sh data/garbage_cans.mp4 --text "garbage can . trash can" --out results/garbage_cans_text.mp4</code>.</li>
+</ul>
+<figure>
+  <img src="img/garbage_cans_text.jpg" alt="Four frames of the garbage cans sample: the blue cart masked blue and the brown cart masked orange in one run" width="675" height="300">
+  <figcaption>Figure 3. One run with <code>--text "garbage can . trash can"</code>, EfficientTAM-S, frames 0, 107, 214 and 320. The detector found two boxes on frame 0 (labels <code>trash can</code>, scores 0.46 and 0.45). Object 1 is blue, object 2 is orange.</figcaption>
+</figure>
+<figure>
+  <img src="img/garbage_cans.jpg" alt="Eight frames of the garbage cans sample: top row with the blue cart masked, bottom row with the brown cart masked" width="675" height="600">
+  <figcaption>Figure 4. <code>track.py</code> output, EfficientTAM-S, frames 0, 107, 214 and 320. Top: box on the blue cart. Bottom: box on the brown cart. These runs have one object each, so each mask is blue (the colour of object 1). The mask stays on the same cart while the view changes from the side to the front.</figcaption>
+</figure>
+<table>
+  <tr><th>Run (spark2)</th><th>FPS (3 runs; SAM3: 1 run)</th><th>Peak GPU memory</th><th>Mask area: frame 0, min, max</th></tr>
+  <tr><td>EfficientTAM-S, blue cart</td><td class="n">102.3 / 105.4 / 104.6</td><td class="n">1352 MiB</td><td class="n">1.925%, 1.914%, 3.831%</td></tr>
+  <tr><td>EfficientTAM-S, brown cart</td><td class="n">101.9 / 103.4 / 103.6</td><td class="n">1352 MiB</td><td class="n">1.248%, 1.248%, 3.722%</td></tr>
+  <tr><td>SAM3, blue cart (<code>--model sam3 --runs 1</code>)</td><td class="n">2.7</td><td class="n">10153 MiB</td><td class="n">1.988%, 1.988%, 3.654%</td></tr>
+  <tr><td>EfficientTAM-S, two boxes in one run (<code>--runs 1</code>)</td><td class="n">61.8</td><td class="n">1415 MiB</td><td class="n">blue 1.927%, 1.915%, 3.828%; brown 1.248%, 1.248%, 3.720%</td></tr>
+  <tr><td>EfficientTAM-S, <code>--text "garbage can . trash can"</code> (<code>--runs 1</code>)</td><td class="n">61.4</td><td class="n">1415 MiB</td><td class="n">2 boxes (scores 0.46, 0.45); 1.935%, 1.921%, 3.842%; 1.255%, 1.255%, 3.755%</td></tr>
+  <tr><td>SAM3, two boxes in one run (<code>--runs 1</code>)</td><td class="n">2.4</td><td class="n">10153 MiB</td><td class="n">blue 1.988%, 1.988%, 3.654%; brown 1.284%, 1.274%, 3.387%</td></tr>
+</table>
+<p>In one run, each object has almost the same mask as in a run of its own. Two objects take more time than one, because memory attention and the mask decoder run for each object (10.3).</p>
+<p>The mask area grows because the camera comes nearer to the cans. In the live app, use two clicks (6.4) or the query <code>garbage can . trash can</code> (6.5). With that query, the detector found both carts on frame 0 with a score of 0.42 each. A test of both cans together on the original clip gave these results:</p>
+<ul>
+  <li>EfficientTAM-S: 56.8 FPS.</li>
+  <li>SAM2.1: 13.3 FPS.</li>
+  <li>Both models kept the two cans in all frames, with no identity change.</li>
+</ul>
+
+<h3>5.5 Add a sample video without personal data</h3>
+<p>A video from a phone can contain personal data. Remove it before you put the video in <code>data/</code>. Personal data includes the location (GPS) in the metadata, the device name, the time, the sound, license plates, house numbers and faces.</p>
+<div class="box warning"><b>Warning</b><p>Do not put the original phone video in the repository. Do not copy it to a different place than the work hosts. Delete the copies on the hosts when you are done.</p></div>
+<p>The tool <code>tools/anonymize.py</code> removes this data. The launcher <code>anonymize_spark2.sh</code> runs it on spark2. Do these steps on the Mac:</p>
+<ol class="steps">
+  <li>Find the names of the subject: the objects that must stay sharp, for example <code>garbage can . trash can</code>.</li>
+  <li>Run <code>./anonymize_spark2.sh my_clip.mov data/garbage_cans.mp4 --subject "garbage can . trash can"</code>.</li>
+  <li>Read the output. Make sure that it lists each subject object, and that it shows <code>tags left: none</code>. The line also shows how many boxes the tool pixelated.</li>
+  <li>Read the lines for each object. They list the frames in which the detector found nothing on the object. These frames only have boxes moved from nearby frames, or no boxes. This is correct only for an object without text. Else, look at these frames.</li>
+  <li>Open the review sheet in <code>results/</code>, for example <code>results/garbage_cans_sheet.jpg</code>.</li>
+  <li>Make sure that no plate, number or face is readable in the sheet.</li>
+  <li>Play the output video one time, and look for the same data.</li>
+  <li>Add the video to <code>data/</code> only after this check.</li>
+</ol>
+<div class="box caution"><b>Caution</b><p>The output line ends with <code>pixelated N boxes</code>. N is the number of boxes that the tool pixelated in all frames. If N is 0, the detector found no plate, number or face on the subject, or the pixelation step did not run. Look at each frame of the review sheet. If the subject has text or a face, do not use the video.</p></div>
+<figure>
+<svg viewBox="0 0 720 250" role="img" aria-labelledby="fa_t">
+  <title id="fa_t">Personal data removal: two passes over the clip, then the review by a person</title>
+  <defs><marker id="ar5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+  <g style="color: var(--muted)">
+  <rect class="grp" x="12" y="14" width="696" height="104" rx="10"/><text class="ttl" x="26" y="36">Pass 1 (GPU, each frame)</text>
+  <rect class="blk" x="26" y="48" width="130" height="56" rx="6"/><text x="38" y="72">Clip</text><text class="sub" x="38" y="90">private dir on spark2</text>
+  <path class="ln" d="M156 76 H178" marker-end="url(#ar5)"/>
+  <rect class="hot" x="182" y="48" width="160" height="56" rx="6"/><text x="194" y="72">Subject masks</text><text class="sub" x="194" y="90">detector frame 0 + tracker</text>
+  <path class="ln" d="M342 76 H364" marker-end="url(#ar5)"/>
+  <rect class="hot" x="368" y="48" width="170" height="56" rx="6"/><text x="380" y="72">Personal data boxes</text><text class="sub" x="380" y="90">plate, number, face (0.2)</text>
+  <path class="ln" d="M538 76 H560" marker-end="url(#ar5)"/>
+  <rect class="blk" x="564" y="48" width="130" height="56" rx="6"/><text x="576" y="72">Memory</text><text class="sub" x="576" y="90">small masks, boxes</text>
+  <rect class="grp" x="12" y="132" width="696" height="104" rx="10"/><text class="ttl" x="520" y="154">Pass 2 (CPU, each frame)</text>
+  <rect class="blk" x="26" y="166" width="150" height="56" rx="6"/><text x="38" y="190">Blur outside</text><text class="sub" x="38" y="208">margin 12 px</text>
+  <path class="ln" d="M176 194 H198" marker-end="url(#ar5)"/>
+  <rect class="blk" x="202" y="166" width="170" height="56" rx="6"/><text x="214" y="190">Pixelate on subject</text><text class="sub" x="214" y="208">boxes, ±2 frames, moved</text>
+  <path class="ln" d="M372 194 H394" marker-end="url(#ar5)"/>
+  <rect class="hot" x="398" y="166" width="150" height="56" rx="6"/><text x="410" y="190">Encode H.264</text><text class="sub" x="410" y="208">no sound, no tags</text>
+  <path class="acc" d="M548 194 H570" marker-end="url(#ar5)"/>
+  <rect class="blk" x="574" y="166" width="120" height="56" rx="6"/><text x="586" y="190">Check</text><text class="sub" x="586" y="208">sheet, report</text>
+  <path class="ln" d="M629 104 V125 H101 V162" marker-end="url(#ar5)"/>
+  </g>
+</svg>
+<figcaption>Figure 5. Personal data removal. Pass 1 keeps only small masks and boxes in memory. Pass 2 reads the clip again and writes the clean video. A person checks the review sheet and the video before the video goes into <code>data/</code>.</figcaption>
+</figure>
+<p>The tool does these steps:</p>
+<ol>
+  <li>The detector finds the subject on frame 0, and SAM2.1 tracks it through the clip (<code>--model</code> can select EfficientTAM).</li>
+  <li>Each frame keeps the subject sharp, with a margin of 12 px. All other pixels get a strong blur: the frame is rebuilt from 90 px across, then a Gaussian blur with sigma 6 is applied. This blur covers cars, houses and painted numbers.</li>
+  <li>The detector looks for <code>license plate . house number . address number . face</code> in each frame, at a low threshold (0.2). Boxes on the subject are pixelated. They are also pixelated in the 2 frames before and after, moved with the object (shift of its centre). A number box larger than 1% of the frame is ignored, because it is usually the whole object. Boxes for all other names (faces, plates and names that you add) are pixelated at all sizes.</li>
+  <li>The encoder writes H.264 without sound, metadata tracks or tags (<code>-map_metadata -1 -an -sn -dn</code>).</li>
+  <li>The tool writes a sheet of 12 frames, the remaining tags and, for each object, the frames without a detection of their own.</li>
+  <li>The tool reads the clip two times from disk. It keeps only small masks (approximately 8 KB for each object and frame) and the boxes in memory.</li>
+</ol>
+<p>The launcher copies the clip into a new private directory on spark2 (only your user can read it). The launcher does not sync the clip with the project, also if the clip is in the project folder. spark2 deletes the clip when the tool stops, also when the connection is lost. The launcher then deletes the directory. If it cannot do this, it shows a warning, and a timer on spark2 deletes the directory after 6 hours. The launcher refuses an output path that is the source clip. Use <code>HOST=spark3</code> for the second host. The first run downloads a static <code>ffmpeg</code> (package <code>imageio-ffmpeg</code>), because the hosts have no <code>ffmpeg</code>.</p>
+<table>
+  <tr><th>Option of <code>tools/anonymize.py</code></th><th>Default</th><th>Function</th></tr>
+  <tr><td><code>--subject</code></td><td>(required)</td><td>Names of the objects that stay sharp.</td></tr>
+  <tr><td><code>--model</code></td><td><code>sam2</code></td><td>Tracker for the subject: <code>sam2</code>, <code>etam-s</code> or <code>etam-ti</code>.</td></tr>
+  <tr><td><code>--pii</code></td><td><code>license plate . house number . address number . face</code></td><td>Names to pixelate on the subject.</td></tr>
+  <tr><td><code>--pii-threshold</code></td><td>0.2</td><td>Detector score for those names. Low on purpose: a false mosaic does no harm.</td></tr>
+  <tr><td><code>--spread</code></td><td>2</td><td>Frames before and after a detection that also get its box, moved with the object. 0 gives only the frame of the detection. A negative value is not permitted.</td></tr>
+  <tr><td><code>--margin</code></td><td>12</td><td>Sharp pixels round the subject.</td></tr>
+  <tr><td><code>--max-area</code></td><td>0.01</td><td>Maximum size of a number box, as a part of the frame. Other names (faces, plates and names that you add) have no maximum.</td></tr>
+  <tr><td><code>--subject-threshold</code>, <code>--max-objects</code></td><td>0.35, 8</td><td>Detector score for the subject names; maximum number of subject objects.</td></tr>
+</table>
+<p>The same tool made <code>data/garbage_cans.mp4</code>. A second run on the original clip (spark3) found the 2 carts (scores 0.42) and left no tags. Each cart had a pixelated area in all 321 frames.</p>
+<div class="box caution"><b>Caution</b><p>The tool can miss text that the detector does not find. A box from a nearby frame moves only with the centre of the object. It does not turn or scale with the object. A person must check the review sheet and the video. The tool does not replace this check.</p></div>
+<div class="box note"><b>Note</b><p>A blurred background makes the tracking a little easier, because the background has less detail. The sample is for a demonstration of the procedures, not for a benchmark of accuracy.</p></div>
+
+<h3>5.6 Run the tests</h3>
+<p>The folder <code>tests/</code> holds the automated tests. They use the Python <code>unittest</code> module. The GPU tests run on spark2 or spark3. The page check runs on the Mac.</p>
+<table>
+  <tr><th>File</th><th>What the tests do</th></tr>
+  <tr><td><code>test_tracker.py</code></td><td>More than one object, correction points and removal, through <code>Prompted</code> and <code>step()</code> on <code>albatross.mp4</code>. Each mask is compared with the same object tracked alone.</td></tr>
+  <tr><td><code>test_text.py</code></td><td>Text queries through <code>live.step()</code> with LLMDet tiny: <code>dark bird</code>, a name with no match, and <b>Object</b> mode.</td></tr>
+  <tr><td><code>test_ws.py</code></td><td>The WebSocket messages (section 9) on a server in the test process: model list, prompts, removal, text queries and their cancel rules, bad frames, bad messages, other sites, a tracking failure, one viewer.</td></tr>
+  <tr><td><code>test_redetect.py</code></td><td><code>track.py --redetect</code> (5.8): an object that comes into the frame gets a track, tracks of objects that go away end, a background mask ends and is not drawn, the comparison of masks.</td></tr>
+  <tr><td><code>test_fix.py</code></td><td>Corrections on a later frame with <code>track()</code>: add points, remove points, a fix on object 2, <code>--fix-box</code>, and bad options (5.7).</td></tr>
+  <tr><td><code>test_offline.py</code></td><td><code>track.py</code> (regression value, two boxes, <code>--text</code>) and <code>tools/anonymize.py</code> on the sample videos (no tags left, more than 0 pixelated boxes).</td></tr>
+  <tr><td><code>page_check.py</code></td><td>The page in Chromium and WebKit with a canvas camera: two objects, <b>×</b>, <b>Delete</b>, <b>Find</b>, <kbd>Esc</kbd> and the phone width.</td></tr>
+</table>
+<p>To run the GPU tests, do these steps:</p>
+<ol class="steps">
+  <li>Run <code>./test_spark2.sh</code>. The tests use EfficientTAM-S. The run takes approximately 6 minutes.</li>
+  <li>Make sure that the last line is <code>OK</code>.</li>
+</ol>
+<p>Options:</p>
+<ul>
+  <li>To use a different model, set <code>TEST_MODEL</code>, for example <code>TEST_MODEL=sam2 ./test_spark2.sh</code>. For <code>sam3</code>, set <code>HF_TOKEN</code> too.</li>
+  <li>To use spark3, set <code>HOST=spark3</code>. You can run spark2 and spark3 at the same time.</li>
+  <li>To run some of the tests, add <code>-k</code> and a part of the test name, for example <code>./test_spark2.sh -k test_ws</code>.</li>
+</ul>
+<div class="box note"><b>Note</b><p>EfficientTAM-Ti and SAM2.1 ignore add points on a different object (5.7). The test of this function shows <code>skipped</code> for these models.</p></div>
+<p>To run the page check, do these steps:</p>
+<ol class="steps">
+  <li>Close all browser tabs that show the live app. The server accepts one viewer only (13), so the test page cannot connect while a different tab is open.</li>
+  <li>Run <code>NO_OPEN=1 ./live_spark2.sh --model etam-s &amp;</code>. <code>NO_OPEN=1</code> stops the launcher from opening a browser tab.</li>
+  <li>Run <code>uv run --no-project --with playwright python tests/page_check.py</code>.</li>
+  <li>Make sure that the output has <code>chromium: ok</code> and <code>webkit: ok</code>.</li>
+  <li>Run <code>pkill -f live_spark2.sh</code> to stop the server.</li>
+</ol>
+
+<h3>5.7 Correct a track on a later frame</h3>
+<p>A track can go to the wrong object, or lose part of the object. You can correct the track on the frame where the error starts. Then <code>track.py</code> tracks again from that frame. This procedure is for EfficientTAM only (<code>--model s</code> or <code>ti</code>).</p>
+<p>To correct a track, do these steps:</p>
+<ol class="steps">
+  <li>Run <code>track.py</code> once without corrections.</li>
+  <li>Open the output video. Find the first frame with the error. Find the object number: 1 is the first <code>--point</code>, <code>--box</code> or text box.</li>
+  <li>Find the pixel position of the correction in that frame.</li>
+  <li>Run <code>track.py</code> again with the same prompts and one or more corrections:
+    <ul>
+      <li><code>--fix 40:1:310,250:+</code> adds an area of object 1 at frame 40.</li>
+      <li><code>--fix 40:1:310,250:-</code> removes an area from object 1 at frame 40.</li>
+      <li><code>--fix-box 75:1:548,172,742,315</code> sets a new box for object 1 at frame 75.</li>
+    </ul>
+  </li>
+  <li>Open the new output video. Make sure that the mask is correct after the corrected frame.</li>
+</ol>
+<figure>
+  <img src="img/offline_fix.jpg" alt="Six frames of two albatrosses: top row tracks the left bird, bottom row moves the track to the right bird at frame 75" width="960" height="360">
+  <figcaption>Figure 6. <code>--fix-box</code>, EfficientTAM-S, frames 0, 75 and 299. Top: one point on the left bird in frame 0. Bottom: the same point and <code>--fix-box 75:1:548,172,742,315</code>. The frames before frame 75 do not change. From frame 75, the track follows the right bird.</figcaption>
+</figure>
+<p>How the correction works:</p>
+<ul>
+  <li>The corrected frame becomes a new prompt frame of the object. The model does not use memory on that frame, because memory attention can ignore the clicks.</li>
+  <li>For points, the mask of the first run on that frame is an input too. Thus a point adds to or removes from the current mask.</li>
+  <li>For a box, the mask of the first run is not an input. The box sets the object again.</li>
+  <li>The memory of the object before the corrected frame is removed. Old memory can cancel the correction after some frames.</li>
+  <li>The frames before the first corrected frame keep the masks of the first run. The model tracks again from the first corrected frame to the end.</li>
+  <li>If all points of one correction are remove points, <code>track.py</code> adds one add point on the far side of the mask. Without an add point, SAM removes the full mask.</li>
+  <li>If all points of one correction are remove points and the mask on that frame is empty, <code>track.py</code> ignores the correction. There is nothing to remove.</li>
+  <li>The live app uses the same function for its correction points (7.7).</li>
+</ul>
+<div class="box note"><b>Note</b><p>With corrections, the FPS value includes the two passes. On spark2, a fix at frame 75 of <code>albatross.mp4</code> gives 44.5 FPS. The value without corrections is approximately 100 FPS.</p></div>
+<div class="box caution"><b>Caution</b><p>Add points on a different object can move the track to that object. They do not add the second object to the first. On <code>albatross.mp4</code>, two add points on the right bird move the track of the left bird to the right bird with EfficientTAM-S. EfficientTAM-Ti and SAM2.1 ignore these points and keep the left bird. To track two objects, give two prompts on frame 0.</p></div>
+
+<h3>5.8 Track objects that come into the frame later</h3>
+<p>With <code>--text</code>, the detector runs on frame 0 only. An object that comes into the frame later has no mask. The option <code>--redetect N</code> runs the detector again every N frames. This procedure is for EfficientTAM only (<code>--model s</code> or <code>ti</code>).</p>
+<p>To track objects that come into the frame later, do these steps:</p>
+<ol class="steps">
+  <li>Find the names of the objects, for example <code>car . truck</code>.</li>
+  <li>Run <code>./run_spark2.sh my.mp4 --text "car . truck" --threshold 0.30 --redetect 15 --out results/my.mp4</code>.</li>
+  <li>Read the <code>objects:</code> line of the output.</li>
+  <li>Open the output video.</li>
+  <li>Make sure that new objects get a mask, and that one object does not have two masks.</li>
+</ol>
+<figure>
+  <img src="img/redetect.jpg" alt="Four frames of a motorway. Top row: cars on the right road have no mask. Bottom row: the same frames, and the cars on the right road have masks" width="960" height="384">
+  <figcaption>Figure 7. Frames 150 and 299 of a motorway clip, EfficientTAM-S. Top: the detector runs on frame 0 only. The cars that come onto the right road after frame 0 have no mask. Bottom: <code>--redetect 15</code>. These cars have masks. Video: "Motorway A40 - on bridge above the traffic" by Kathinka Engels / Sounds of Changes, CC BY 3.0, via Wikimedia Commons. The figure is cropped and has masks added.</figcaption>
+</figure>
+<p>The sequence for each frame is:</p>
+<ol>
+  <li><b>Detect.</b> On every Nth frame, the detector finds boxes for the names.</li>
+  <li><b>Remove known boxes.</b> The tool ignores a box that has a box IoU of 0.5 or more with the box of a tracked mask.</li>
+  <li><b>Track.</b> Each remaining box becomes a new object on this frame. The tracker runs for all objects.</li>
+  <li><b>Compare the new masks.</b> A new mask is a duplicate if another mask covers 50% or more of the smaller of the two masks. The tool removes the new object. Boxes alone cannot show this: the box of the girl contains the mask of the boy, but she is a different object.</li>
+  <li><b>End tracks.</b> The tool ends a track after 15 frames with an empty mask. It also ends a track when the mask covers 25% or more of the frame. Such a mask is the background, not an object, and the tool does not draw it.</li>
+</ol>
+<div class="box note"><b>Note</b><p>This option is slower than one detection. On the clip of Figure 7, it gives 2.0 FPS for up to 44 objects. One detection gives 3.8 FPS for 19 objects. Most of the time is memory attention for each object. The detector uses only 4.4 of 149 seconds.</p></div>
+<div class="box caution"><b>Caution</b><p>An object that goes away for more than 15 frames gets a new number when it comes back. Objects near each other can still join in one mask, for example players in a pile (10.5). An object that fills 25% or more of the frame cannot be tracked with this option. The tool tracks at most 64 objects at a time.</p></div>
+
+<h2 id="live">6. Live app procedures</h2>
+<h3>6.1 Start the live app</h3>
+<ol class="steps">
+  <li>Open a terminal on the Mac.</li>
+  <li>Go to the project folder: <code>cd ~/GWorkspace/TrackAnything</code>.</li>
+  <li>Start the launcher: <code>./live_spark2.sh --model etam-s</code>.</li>
+  <li>Wait for the browser to open <code>http://localhost:8765</code>.</li>
+  <li>Allow camera access when the browser asks.</li>
+  <li>Make sure that the status at the top right shows <b>Live</b> and the model name.</li>
+</ol>
+<p>The <code>--model</code> option sets the model at start. You can change the model later in the page. Without <code>--model</code>, the server starts with SAM2.1 small. To use a different port, set <code>PORT=&lt;number&gt;</code>.</p>
+<div class="box note"><b>Note</b><p>Use one browser tab for the live app. The server accepts one viewer at a time. A second tab shows "Busy · retrying" (Figure 21). When a page connects, the server clears the track. A page that you load again thus starts with no objects.</p></div>
+<div class="box caution"><b>Caution</b><p>The first start of EfficientTAM compiles the image encoder. The page can show "Connecting" for up to one minute. Do not stop the launcher during this time.</p></div>
+
+<h3>6.2 Track an object</h3>
+<ol class="steps">
+  <li>Point the camera at the object.</li>
+  <li>Click the object in the video.</li>
+  <li>Make sure that a blue mask covers the object.</li>
+</ol>
+<figure>
+  <img src="img/ui_tracking.jpg" alt="Live app with the left albatross marked in blue, model panel, selection panel and performance panel" width="900" height="615">
+  <figcaption>Figure 8. Live app with EfficientTAM-S. The blue mask shows the tracked bird. The mask does not include all of the dark wing. The performance panel showed 24.9 FPS, 17 ms round trip and 11.2 ms server time for this capture. The test camera sends 30 frames each second.</figcaption>
+</figure>
+<p>To give a box prompt, do these steps:</p>
+<ol class="steps">
+  <li>Push and hold the mouse button at one corner of the object.</li>
+  <li>Move the pointer to the opposite corner.</li>
+  <li>Release the mouse button.</li>
+</ol>
+<figure>
+  <img src="img/ui_drag.jpg" alt="Live app with a dashed blue box during a drag" width="900" height="615">
+  <figcaption>Figure 9. A box prompt during the drag. The dashed box shows the area. The page sends the box when you release the mouse button. A drag smaller than 2% of the width and height counts as a click.</figcaption>
+</figure>
+<div class="box note"><b>Note</b><p>Use a box for objects with parts, for example a person with a shirt. A point on the shirt can give a mask of the shirt only. To correct this type of mask, use correction points (6.3).</p></div>
+
+<h3>6.3 Correct the mask</h3>
+<p>Use correction points when the mask covers too little or too much of the object. A correction point does not start a new track. The model keeps its memory bank. With more than one object, the correction points change the picked object only (6.4).</p>
+<p>To add an area to the mask, do these steps:</p>
+<ol class="steps">
+  <li>Push and hold <kbd>Shift</kbd>.</li>
+  <li>Click the area that the mask does not cover.</li>
+  <li>Release <kbd>Shift</kbd>.</li>
+  <li>Make sure that the mask covers the area.</li>
+</ol>
+<p>To remove an area from the mask, do these steps:</p>
+<ol class="steps">
+  <li>Push and hold <kbd>Alt</kbd> (<kbd>Option</kbd> on a Mac).</li>
+  <li>Click the area that the mask must not cover.</li>
+  <li>Release <kbd>Alt</kbd>.</li>
+</ol>
+<p>On a touch screen, there is no <kbd>Shift</kbd> key. Use the <b>New</b>, <b>Add</b> and <b>Remove</b> buttons in the <b>Selection</b> panel. The button sets the function of the next clicks. A box always starts a new track.</p>
+<figure>
+  <img src="img/ui_fix.jpg" alt="Two video frames: left, a mask on the wing of the right bird only; right, a mask on the full bird after two add points" width="900" height="251">
+  <figcaption>Figure 10. Correction points with SAM2.1. Left: frame 1, a point on the wing tip gives a mask of the wing only (1.3% of the frame). Right: frame 30, after two add points on the body and the head on frame 2, the mask covers the full bird (2.6%). This figure comes from a script on spark2 at fixed frames, not from a capture of the page.</figcaption>
+</figure>
+<div class="box caution"><b>Caution</b><p>A remove point takes out part of the mask, but the result is not exact. On <code>albatross.mp4</code>, two remove points on a bird left 40% of the bird with EfficientTAM-S, 64% with EfficientTAM-Ti and 6% with SAM2.1. If the mask is wrong after a remove point, start a new track with a box.</p></div>
+<div class="box note"><b>Note</b><p>A remove point without an add point gives SAM no area to keep. The server then adds one add point. It puts this point on the mask cell that is farthest from the remove points. If this cell is on the wrong area, use an add point on the correct area.</p></div>
+
+<h3>6.4 Track more than one object</h3>
+<p>The app can track up to 8 objects at the same time. Each object has its own colour and its own chip in the <b>Selection</b> panel. The chip shows the object number and its mask area.</p>
+<ol class="steps">
+  <li>Select the first object (6.2).</li>
+  <li>Push and hold <kbd>Cmd</kbd> (<kbd>Ctrl</kbd> on Windows and Linux).</li>
+  <li>Click the next object.</li>
+  <li>Release <kbd>Cmd</kbd>.</li>
+  <li>Make sure that a mask with a new colour covers the object.</li>
+</ol>
+<p>To use a box for the next object, click <b>Object</b> in the <b>Selection</b> panel. Then drag the box. Click <b>New</b> to go back to the usual function.</p>
+<p>The new object becomes the picked object. To correct a different object, do these steps:</p>
+<ol class="steps">
+  <li>Click the chip of the object.</li>
+  <li>Use correction points (6.3).</li>
+</ol>
+<figure>
+  <img src="img/ui_multi.jpg" alt="Live app with one albatross in blue and the other in orange, and two object chips in the selection panel" width="900" height="615">
+  <figcaption>Figure 11. Two objects with EfficientTAM-S: the left bird (1, blue, 3.7%) and the right bird (2, orange, 2.5%). Each object came from a box. The server time is 18.1 ms for two objects.</figcaption>
+</figure>
+<div class="box note"><b>Note</b><p>Each object adds time to each frame. The image encoder runs one time for all objects. Memory attention and the mask decoder run one time for each object. See 10.3.</p></div>
+<div class="box note"><b>Note</b><p>A click or a box in <b>New</b> mode starts a new track and removes all objects. <b>Clear selection</b> also removes all objects.</p></div>
+<p>To stop the tracking of one object, do one of these steps:</p>
+<ul>
+  <li>Click <b>×</b> on the chip of the object.</li>
+  <li>Click the chip of the object. Then push <kbd>Delete</kbd> or <kbd>Backspace</kbd>.</li>
+</ul>
+<p>The server removes the object before the next frame. The other objects continue to track with the same masks, numbers and colours. If you remove the last object, the track ends.</p>
+<figure>
+  <img src="img/ui_remove.jpg" alt="Two live app screens: left, three objects with chips 1, 2 and 3; right, after a click on the x of chip 2, chips 1 and 3 remain" width="900" height="285">
+  <figcaption>Figure 12. Remove one object, EfficientTAM-S. Left: the left bird (1, blue), the right bird (2, orange) and a small bird behind them (3, green). Right: after a click on <b>×</b> on chip 2, the right bird has no mask. The other two birds keep their numbers and colours.</figcaption>
+</figure>
+<p>When two masks cover the same pixel, the page shows the object with the higher logit.</p>
+
+<h3>6.5 Find objects by text</h3>
+<p>You can type the names of the objects. The detector finds them in the next frame. Each box that it finds becomes one object, and the tracker follows each object from that frame on.</p>
+<ol class="steps">
+  <li>Click the <b>Find</b> field in the <b>Selection</b> panel.</li>
+  <li>Type one or more names. Separate the names with a dot, for example <code>dark bird . rocks</code>.</li>
+  <li>Push <kbd>Enter</kbd>, or click <b>Find</b>.</li>
+  <li>Wait for the message below the video, for example "Found 2: dark bird 0.67, dark bird 0.52". The page accepts the next query only after this message.</li>
+  <li>Make sure that each mask covers the correct object. The chips show the labels.</li>
+</ol>
+<figure>
+  <img src="img/ui_text1.jpg" alt="Live app after the query dark bird: two birds are marked and the chips show 1 dark bird and 2 dark bird" width="900" height="615">
+  <figcaption>Figure 13. The query <code>dark bird</code> in <b>New</b> mode with EfficientTAM-S. The detector found two boxes (scores 0.67 and 0.52). The chips show the label.</figcaption>
+</figure>
+<p>To add objects by text to the current track, do these steps:</p>
+<ol class="steps">
+  <li>Click <b>Object</b> in the <b>Selection</b> panel.</li>
+  <li>Type the names in the <b>Find</b> field.</li>
+  <li>Push <kbd>Enter</kbd>.</li>
+</ol>
+<figure>
+  <img src="img/ui_text2.jpg" alt="Live app after the query rocks in Object mode: the two birds keep their masks, and chips 3 and 4 show the label rocks" width="900" height="615">
+  <figcaption>Figure 14. The query <code>rocks</code> in <b>Object</b> mode adds objects 3 and 4. The two birds stay objects 1 and 2. Object 4 is the rock pile. Object 3 is a white bird: the detector gave it the wrong label (score 0.50). If the detector gives the label to a bird that is already tracked, the server ignores that box.</figcaption>
+</figure>
+<table>
+  <tr><th>Mode</th><th>Result of a query</th></tr>
+  <tr><td><b>New</b> (and <b>Add</b>, <b>Remove</b>)</td><td>A new track starts with all found objects. If the detector finds nothing, the current track stays.</td></tr>
+  <tr><td><b>Object</b></td><td>The found objects are added to the current track, up to 8 objects in total. The server ignores a box that overlaps a tracked object (box IoU 0.5 or more).</td></tr>
+</table>
+<p>Query rules:</p>
+<ul>
+  <li>Use simple nouns in lower case, for example <code>cup</code>, <code>person</code> or <code>red cup</code>.</li>
+  <li>Each found box is one object. The query <code>dark bird</code> finds each dark bird in the frame.</li>
+  <li>The maximum length is 200 characters. The server uses the first 16 names.</li>
+</ul>
+<div class="box note"><b>Note</b><p>The first query loads the detector. It takes approximately 5 seconds. Each query after that takes approximately 0.2 seconds (10.4).</p></div>
+<div class="box note"><b>Note</b><p>The detector runs one time for each query. It does not find an object that comes into view later. To find it, send the query again in <b>Object</b> mode.</p></div>
+<div class="box caution"><b>Caution</b><p>A box with a low score can be a different object. Look at the score in the message and at the masks. If a mask is on the wrong object, push <kbd>Esc</kbd> and select the object with a box, or use correction points (6.3).</p></div>
+<p>If the detector finds nothing, the message is "Nothing found for ...". Use one simple name and try again.</p>
+
+<h3>6.6 Clear the selection</h3>
+<ol class="steps">
+  <li>Push <kbd>Esc</kbd>, or click <b>Clear selection</b>.</li>
+</ol>
+<p>All masks and object chips go away. The hint "Click an object to track it" comes back.</p>
+
+<h3>6.7 Change the model</h3>
+<ol class="steps">
+  <li>Click a model in the <b>Model</b> panel.</li>
+  <li>Wait until the loading overlay goes away.</li>
+  <li>Read the message below the video.</li>
+  <li>Select the object again.</li>
+</ol>
+<figure>
+  <img src="img/ui_loading.jpg" alt="Live app with a loading overlay that says Loading EfficientTAM-Ti" width="900" height="615">
+  <figcaption>Figure 15. The loading overlay. The server loads a model when you select it for the first time. The model panel is disabled during the load.</figcaption>
+</figure>
+<p>The server keeps each loaded model in GPU memory. A second change to the same model is immediate. A model change clears the selection.</p>
+<div class="box caution"><b>Caution</b><p>SAM3 needs <code>HF_TOKEN</code>. If the token is missing or has no access, the load fails. The page then shows the error and keeps the current model.</p></div>
+
+<h3>6.8 Read the performance panel</h3>
+<table>
+  <tr><th>Field</th><th>Meaning</th></tr>
+  <tr><td>Throughput</td><td>Replies per second, averaged over 10 replies. The camera frame rate limits this value.</td></tr>
+  <tr><td>Round trip</td><td>Time from frame send to the reply, in milliseconds. It includes the network and the server.</td></tr>
+  <tr><td>Server</td><td>Time on spark2 for one frame: decode, model and pack.</td></tr>
+  <tr><td>Mask</td><td>Total mask area of all objects, as a percentage of the mask grid. "–" means no selection. The chips show the area of each object.</td></tr>
+</table>
+
+<h3>6.9 Use the page on a narrow screen</h3>
+<p>Below a width of 880 px, the panels move below the video. The page has no horizontal scroll at 390 px.</p>
+<figure class="narrow">
+  <img src="img/ui_phone.jpg" alt="Live app at phone width with panels below the video" width="300" height="692">
+  <figcaption>Figure 16. The page at 390 px width.</figcaption>
+</figure>
+
+<h3>6.10 Stop the live app</h3>
+<ol class="steps">
+  <li>Push <kbd>Ctrl</kbd>+<kbd>C</kbd> in the launcher terminal.</li>
+</ol>
+<p>As an alternative, run <code>pkill -f live_spark2.sh</code> in a different terminal. Both methods stop the SSH tunnel and the server on spark2.</p>
+<p>To make sure that the server stopped, run this command:</p>
+<pre><code>ssh spark2 'pgrep -af live.py || echo stopped'</code></pre>
+
+<h2 id="tracking">7. How tracking works</h2>
+<p>The models do not detect objects and then match them between frames. They do segmentation with memory. For each new frame, the model finds the object that it remembers and marks its pixels. EfficientTAM, SAM2.1 and SAM3 all use this method.</p>
+
+<h3>7.1 Sequence for each frame</h3>
+<figure>
+<svg viewBox="0 0 720 340" role="img" aria-labelledby="f7t">
+  <title id="f7t">Tracking loop: image encoder, memory attention, mask decoder, memory encoder and memory bank</title>
+  <defs><marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+  <g style="color: var(--muted)">
+  <rect class="blk" x="443" y="16" width="200" height="56" rx="6"/><text x="457" y="40">2. Prompt</text><text class="sub" x="457" y="58">point, box or detector box</text>
+  <path class="acc" d="M543 72 V106" marker-end="url(#ar2)"/>
+  <rect class="blk" x="16" y="116" width="92" height="50" rx="6"/><text x="44" y="146">Frame</text>
+  <rect class="hot" x="136" y="110" width="136" height="62" rx="6"/><text x="150" y="136">1. Image encoder</text><text class="sub" x="150" y="156">most of the compute</text>
+  <rect class="hot" x="300" y="110" width="150" height="62" rx="6"/><text x="314" y="136">3. Memory attention</text><text class="sub" x="314" y="156">frame and memory bank</text>
+  <rect class="hot" x="478" y="110" width="130" height="62" rx="6"/><text x="492" y="136">4. Mask decoder</text><text class="sub" x="492" y="156">logits, object score</text>
+  <rect class="blk" x="634" y="116" width="72" height="50" rx="6"/><text x="648" y="138">Mask</text><text class="sub" x="648" y="155">to page</text>
+  <path class="ln" d="M108 141 H132" marker-end="url(#ar2)"/><path class="ln" d="M272 141 H296" marker-end="url(#ar2)"/>
+  <path class="ln" d="M450 141 H474" marker-end="url(#ar2)"/><path class="ln" d="M608 141 H630" marker-end="url(#ar2)"/>
+  <path class="ln" d="M543 172 V236" marker-end="url(#ar2)"/>
+  <rect class="hot" x="478" y="240" width="146" height="62" rx="6"/><text x="492" y="266">5. Memory encoder</text><text class="sub" x="492" y="286">features + new mask</text>
+  <rect class="blk" x="258" y="226" width="190" height="96" rx="6"/><text class="ttl" x="272" y="250">Memory bank</text>
+  <text class="sub" x="272" y="272">prompt frame (always kept)</text><text class="sub" x="272" y="290">6 recent frames + masks</text>
+  <text class="sub" x="272" y="308">16 object pointers</text>
+  <path class="ln" d="M478 271 H452" marker-end="url(#ar2)"/>
+  <path class="ln" d="M375 226 V176" marker-end="url(#ar2)"/>
+  </g>
+</svg>
+<figcaption>Figure 17. The tracking loop. The numbers agree with the steps below. Step 2 occurs only on the prompt frame.</figcaption>
+</figure>
+<ol>
+  <li><b>Image encoder.</b> The encoder changes the frame into a grid of features. This step uses most of the compute. EfficientTAM uses a plain ViT-S or ViT-Ti at 512 × 512. SAM2.1 uses Hiera at 1024 × 1024. SAM3 uses its own, larger encoder at 1008 × 1008.</li>
+  <li><b>Prompt.</b> On the prompt frame, the mask decoder uses your point or box, or a box from the detector (7.6), to make the first mask. The model puts this result in the memory bank as the prompt frame. The prompt frame stays in the memory bank for the full track.</li>
+  <li><b>Memory attention.</b> On each frame after the prompt frame, there is no prompt. The features of the current frame attend to the memory bank. The memory bank contains the prompt frame, up to 6 recent frames with their masks and up to 16 object pointers. An object pointer is a short summary of the appearance of the object.</li>
+  <li><b>Mask decoder.</b> The decoder makes the logits of the mask grid. It also makes an object score. The object score tells if the object is in the frame.</li>
+  <li><b>Memory encoder.</b> The encoder combines the new mask with the frame features. The result goes into the memory bank. The next frame uses it.</li>
+</ol>
+
+<h3>7.2 Occlusion</h3>
+<p>If the object score tells that the object is not in the frame, the model sets all logits below 0. The mask is then empty. When the object comes back, the model finds it again if the memory bank still agrees with its appearance.</p>
+
+<h3>7.3 Model differences</h3>
+<table>
+  <tr><th>Model</th><th>Image encoder</th><th>Input size</th><th>Mask grid</th><th>Source</th></tr>
+  <tr><td>EfficientTAM-Ti</td><td>ViT-Ti (plain, non-hierarchical)</td><td class="n">512 × 512</td><td class="n">128 × 128</td><td><code>yformer/EfficientTAM</code> @ <code>abcd061</code></td></tr>
+  <tr><td>EfficientTAM-S</td><td>ViT-S (plain, non-hierarchical)</td><td class="n">512 × 512</td><td class="n">128 × 128</td><td><code>yformer/EfficientTAM</code> @ <code>abcd061</code></td></tr>
+  <tr><td>SAM2.1 small</td><td>Hiera-S (hierarchical)</td><td class="n">1024 × 1024</td><td class="n">256 × 256</td><td><code>facebook/sam2.1-hiera-small</code> (transformers)</td></tr>
+  <tr><td>SAM3</td><td>SAM3 vision backbone</td><td class="n">1008 × 1008</td><td class="n">288 × 288</td><td><code>facebook/sam3</code> (transformers, gated)</td></tr>
+</table>
+<p>EfficientTAM keeps the SAM2 design. It changes two parts. First, it uses a small plain ViT as the image encoder. Second, it makes memory attention less expensive: it pools the spatial memory into fewer tokens. On spark2, these changes make EfficientTAM-S approximately 4 times faster than SAM2.1 small in the live app. SAM3 also uses the SAM2 tracking design, with a much larger encoder. SAM3 has 466 million parameters in the tracker.</p>
+
+<h3>7.4 Implementation in <code>live.py</code></h3>
+<ul>
+  <li><b>One frame at a time.</b> SAM2.1 and SAM3 use the streaming video session of Hugging Face transformers (<code>Sam2VideoModel</code>, <code>Sam3TrackerVideoModel</code>). EfficientTAM has an offline video API only. For this reason, <code>EfficientTAMTracker</code> adds each frame to the video state. It then runs <code>propagate_in_video</code> on that one frame only (<code>num_frames = t + 1</code> and <code>max_frame_num_to_track = 0</code>).</li>
+  <li><b>New prompt, new track.</b> A click or a box starts a new track. The next frame becomes the prompt frame.</li>
+  <li><b>Correction points.</b> The server puts correction points on the last frame that it tracked. It runs that frame again as a new prompt frame, without the memory bank. The current mask logits go into the mask decoder with the points. This is the interactive refinement that SAM is trained for. Then the server removes the older frames from the memory bank, but it keeps the prompt frames. Without these two steps, the memory bank ignores the points, or replaces the correction after a few frames. SAM2.1 kept a mask of 1.8% of the frame when it received two add points on a tracked frame. The function <code>as_cond_frame()</code> does these steps for the live app and for <code>track.py --fix</code> (7.7).</li>
+  <li><b>Hugging Face gap.</b> The <code>forward()</code> function of the Hugging Face video models has no input for the current mask logits. <code>Tracker</code> adds them for the correction call only (<code>prev_sam_mask_logits</code>). The EfficientTAM predictor adds them itself.</li>
+  <li><b>Limited history.</b> The function <code>prune()</code> removes frames older than 16 from the state. The prompt frame stays. The model reads only the recent frames, so this change has no effect on the result. Without corrections, memory use and latency stay constant for any track length. Each correction adds one prompt frame that stays (7.5).</li>
+  <li><b>More than one object.</b> The server numbers the objects in the order that you add them, with a maximum of 8 at a time. Both upstream sessions accept a new object on a later frame. That frame becomes the prompt frame of the new object, and the other objects continue to track. The image encoder runs one time for each frame. Memory attention and the mask decoder run for each object. <b>Clear selection</b> and a model change end the track.</li>
+  <li><b>Hugging Face gap for objects.</b> Each call of <code>add_inputs_to_inference_session</code> replaces the list of objects with new inputs. When you add two objects on the same frame, the first object then has no prompt frame, and the model stops with an error. <code>Tracker.step</code> sets the full list after it adds all new objects.</li>
+  <li><b>Remove one object.</b> The server removes the object in the worker, before the next frame. It deletes the inputs, outputs and memory of the object from the session. Then it moves the later objects down by one position (<code>drop_index()</code>). The upstream function <code>remove_object()</code> of EfficientTAM does not work here. It runs the prompt frames of the object again, and <code>prune()</code> has already removed those images. The Hugging Face session has no removal function, so the server uses the same method for both trackers. The page gives each new object the first free colour of the 8 colours. The object keeps that colour until it goes away, so two active objects never have the same colour.</li>
+  <li><b>Warm-up.</b> At start, <code>EfficientTAMTracker</code> runs three black frames. This step compiles the image encoder before your first click.</li>
+</ul>
+
+<h3>7.5 Limits of the tracking method</h3>
+<ul>
+  <li><b>No new detection.</b> The model knows the object only from its memory bank. A large change of appearance or a long absence can cause the track to drift or stop. In this condition, select the object again. The detector of 7.6 also runs one time only, for each query.</li>
+  <li><b>Prompt quality.</b> A box usually gives a better first mask than a point. This is true for objects with parts. Correction points (6.3) can repair a point prompt.</li>
+  <li><b>Each correction adds a prompt frame.</b> The server keeps all prompt frames, and the model reads all of them. Many corrections in one track make each frame slower. Start a new track after many corrections.</li>
+  <li><b>Flat surfaces.</b> On areas with little texture, the mask can spread into the background.</li>
+</ul>
+
+<h3>7.6 How text prompts work</h3>
+<p>The trackers of 7.1 do not read text. A separate detector changes the query into boxes. The boxes then go to the tracker as box prompts. This method has the name "detect, then track". Grounded-SAM-2 uses the same method.</p>
+<figure>
+<svg viewBox="0 0 720 210" role="img" aria-labelledby="f76t">
+  <title id="f76t">Text prompt: query and frame go to the detector, the boxes go to the tracker as box prompts, and the tracker continues alone</title>
+  <defs><marker id="ar3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+  <g style="color: var(--muted)">
+  <rect class="blk" x="16" y="24" width="124" height="50" rx="6"/><text x="30" y="46">Query</text><text class="sub" x="30" y="64">boy . red cup</text>
+  <rect class="blk" x="16" y="104" width="124" height="50" rx="6"/><text x="30" y="126">Frame</text><text class="sub" x="30" y="144">next frame only</text>
+  <path class="ln" d="M140 49 H154 V80 H166" marker-end="url(#ar3)"/><path class="ln" d="M140 129 H154 V98 H166" marker-end="url(#ar3)"/>
+  <rect class="hot" x="170" y="54" width="156" height="70" rx="6"/><text x="184" y="78">1. Detector</text><text class="sub" x="184" y="97">LLMDet tiny</text><text class="sub" x="184" y="114">≈ 0.2 s, one time</text>
+  <path class="ln" d="M326 89 H352" marker-end="url(#ar3)"/>
+  <rect class="blk" x="356" y="54" width="156" height="70" rx="6"/><text x="370" y="78">2. Boxes</text><text class="sub" x="370" y="97">score ≥ 0.35, NMS</text><text class="sub" x="370" y="114">max. 8 objects</text>
+  <path class="acc" d="M512 89 H538" marker-end="url(#ar3)"/>
+  <rect class="hot" x="542" y="54" width="162" height="70" rx="6"/><text x="556" y="78">3. Tracker (7.1)</text><text class="sub" x="556" y="97">1 box = 1 object</text><text class="sub" x="556" y="114">each frame</text>
+  <path class="ln" d="M660 124 V160 H586 V128" marker-end="url(#ar3)"/>
+  <text class="sub" x="300" y="190">Next frames: the tracker runs alone. The detector does not run again.</text>
+  </g>
+</svg>
+<figcaption>Figure 18. Detect, then track. The detector runs on the first frame after the query. Each box becomes the prompt of one object.</figcaption>
+</figure>
+<ol>
+  <li><b>Detector.</b> The detector is in <code>detector.py</code>. The server sends the frame and the names to the detector. The detector is LLMDet tiny: a Swin-T image backbone, a BERT text encoder and the MM Grounding DINO head (<code>MMGroundingDinoForObjectDetection</code>). It resizes the frame to 800 px on the short side. It runs in bf16 on the GPU.</li>
+  <li><b>Boxes.</b> The server keeps the boxes with a score of 0.35 or more and a text score of 0.25 or more. Non-maximum suppression (IoU 0.7) removes two boxes on the same thing, also with different labels. In <b>Object</b> mode, the server also removes boxes that overlap a tracked object (IoU 0.5 or more with the box of its current mask). Then it keeps the best boxes, up to the limit of 8 objects.</li>
+  <li><b>Tracker.</b> Each box becomes the box prompt of one new object. All of these objects get the same prompt frame. From the next frame, the tracker works as in 7.1. The speed is the speed of the tracker for that number of objects (10.3).</li>
+</ol>
+<p>Reasons for this method:</p>
+<ul>
+  <li><b>Speed.</b> The detector takes approximately 0.2 s. If it ran on each frame, the live app would run at less than 5 FPS. With one detection, the app keeps the speed of the tracker, for example 57 FPS for two objects with EfficientTAM-S.</li>
+  <li><b>Stable identity.</b> The tracker keeps each object as one object through the video. A detector on each frame must match its boxes between frames again.</li>
+  <li><b>Same tracker.</b> The boxes use the same path as a box that you drag. Correction points and the other functions work on found objects too.</li>
+</ul>
+<p>SAM3 can also take text. It detects and tracks in one model. But SAM3 runs at approximately 3 FPS in the live app. As a detector, its image model takes approximately 1 s for one frame with three names on spark2 (10.4). For this reason, the live app uses a small detector with the fast trackers.</p>
+<p>Threshold values are in <code>live.py</code>: <code>BOX_THRESHOLD = 0.35</code>, <code>TEXT_THRESHOLD = 0.25</code>, <code>NMS_IOU = 0.7</code>, <code>DUP_IOU = 0.5</code>. With 0.30, the detector found a "giraffe" with a score of 0.31 on a test image without a giraffe. A boy that was half hidden still had a score of 0.39.</p>
+
+<h3>7.7 Correction step in detail</h3>
+<p>The live app (6.3) and <code>track.py --fix</code> (5.7) use one function for a correction: <code>as_cond_frame()</code> in <code>live.py</code>. Thus the two tools change the tracker state in the same way. Figure 19 shows the frames of one object. The steps below agree with the function.</p>
+<figure>
+<svg viewBox="0 0 720 190" role="img" aria-labelledby="f18t">
+  <title id="f18t">Correction on frame f: the older memory goes, frame f becomes a prompt frame, tracking continues from f</title>
+  <defs><marker id="ar18" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+  <g style="color: var(--muted)">
+  <text class="sub" x="584" y="28" text-anchor="middle">tracking continues from f</text>
+  <path class="acc" d="M432 40 H690" marker-end="url(#ar18)"/>
+  <rect class="hot" x="20" y="60" width="64" height="44" rx="6"/><text x="52" y="87" text-anchor="middle">0</text>
+  <rect class="blk" x="96" y="60" width="64" height="44" rx="6"/><text x="128" y="87" text-anchor="middle">…</text>
+  <rect class="grp" x="172" y="60" width="64" height="44" rx="6"/><text x="204" y="87" text-anchor="middle" class="sub">f−3</text>
+  <rect class="grp" x="248" y="60" width="64" height="44" rx="6"/><text x="280" y="87" text-anchor="middle" class="sub">f−2</text>
+  <rect class="grp" x="324" y="60" width="64" height="44" rx="6"/><text x="356" y="87" text-anchor="middle" class="sub">f−1</text>
+  <rect class="hot" x="400" y="60" width="64" height="44" rx="6"/><text x="432" y="87" text-anchor="middle" class="ttl">f</text>
+  <rect class="blk" x="476" y="60" width="64" height="44" rx="6"/><text x="508" y="87" text-anchor="middle">f+1</text>
+  <rect class="blk" x="552" y="60" width="64" height="44" rx="6"/><text x="584" y="87" text-anchor="middle">f+2</text>
+  <rect class="blk" x="628" y="60" width="64" height="44" rx="6"/><text x="660" y="87" text-anchor="middle">…</text>
+  <text class="sub" x="52" y="128" text-anchor="middle">prompt frame</text><text class="sub" x="52" y="144" text-anchor="middle">(kept)</text>
+  <text class="sub" x="280" y="128" text-anchor="middle">older memory of the object</text><text class="sub" x="280" y="144" text-anchor="middle">deleted (5)</text>
+  <text class="sub" x="432" y="128" text-anchor="middle">runs again as a</text><text class="sub" x="432" y="144" text-anchor="middle">prompt frame (4, 6)</text>
+  <text class="sub" x="584" y="128" text-anchor="middle">tracked with the</text><text class="sub" x="584" y="144" text-anchor="middle">corrected mask (7)</text>
+  <text class="sub" x="360" y="176" text-anchor="middle">Solid blue: prompt frames. Dashed: deleted outputs. The numbers agree with the steps below.</text>
+  </g>
+</svg>
+<figcaption>Figure 19. A correction on frame f of one object. The other objects do not change.</figcaption>
+</figure>
+<ol>
+  <li><b>Read the current mask.</b> The function reads the logits of the object on frame f. The live app uses the last tracked frame as f. <code>track.py</code> uses the frame in the <code>--fix</code> option.</li>
+  <li><b>Add a keep point.</b> If all points are remove points, the function adds one add point (<code>anchor()</code>). It puts this point on the mask cell that is farthest from the remove points.</li>
+  <li><b>Stop on an empty mask.</b> If all points are remove points and the mask is empty, there is nothing to remove. The function stops. The tracker state does not change.</li>
+  <li><b>Make f a prompt frame.</b> The function removes f from the tracked frames of the object. The model then does not use memory attention on f. Memory attention can ignore the clicks.</li>
+  <li><b>Delete the older memory.</b> The function deletes the outputs of the object on the frames before f. The prompt frames stay. Without this step, the older memory cancels the correction after some frames. The output of frame f stays, because the model uses it in step 6.</li>
+  <li><b>Run f again.</b> The caller runs frame f with the points. The old logits of f go into the mask decoder with the points. Thus the points add to or remove from the current mask.</li>
+  <li><b>Continue.</b> The live app continues with the next camera frame. <code>track.py</code> tracks again from the first corrected frame to the end.</li>
+</ol>
+<table>
+  <tr><th>Item</th><th>Live app</th><th><code>track.py --fix</code></th></tr>
+  <tr><td>Frame f</td><td>The last tracked frame.</td><td>The frame in the option.</td></tr>
+  <tr><td>Point position</td><td>0 to 1, from the page.</td><td>Pixels. <code>track.py</code> changes them to 0 to 1 for the function, and back to pixels for the model.</td></tr>
+  <tr><td>Old logits of f</td><td>SAM2.1 and SAM3: the server adds them to the call (<code>prev_sam_mask_logits</code>). EfficientTAM: the upstream predictor reads them.</td><td>The upstream predictor reads them.</td></tr>
+  <tr><td>Box</td><td>Not available. A box starts a new track.</td><td><code>--fix-box</code>. <code>track.py</code> also deletes the output of f, so the old mask cannot change the box.</td></tr>
+  <tr><td>After step 6</td><td>The server deletes the old output of f. Frame f is a prompt frame now.</td><td>The second pass writes new outputs.</td></tr>
+</table>
+<div class="box note"><b>Note</b><p>Make a change to the correction method in <code>as_cond_frame()</code> only. <code>tests/test_tracker.py</code> tests the live app. <code>tests/test_fix.py</code> tests <code>track.py</code>. Run both after a change (5.6).</p></div>
+
+<h2 id="datapath">8. Live data path</h2>
+<p>This sequence occurs for each frame:</p>
+<ol>
+  <li>The page draws the current camera image into a canvas. The maximum width is 640 px. The canvas keeps the aspect ratio of the camera.</li>
+  <li>The page encodes the canvas as JPEG with quality 0.7.</li>
+  <li>The page sends the JPEG as one binary WebSocket message.</li>
+  <li>The server decodes the JPEG on the GPU with nvJPEG (<code>torchvision.io.decode_jpeg(device="cuda")</code>). The frame stays in GPU memory.</li>
+  <li>If a query waits, the detector finds the boxes in this frame. Each box becomes the prompt of a new object (7.6). This step occurs one time for each query.</li>
+  <li>The tracker resizes the frame on the GPU and runs one step. For EfficientTAM, the resize is antialiased bicubic.</li>
+  <li>The server sends a JSON message with the time, the mask area of each object and the grid size. After a query, the message also has the labels and scores of the found boxes.</li>
+  <li>The server sends the logits of the mask grid as raw float16 in a second, binary message.</li>
+  <li>When the JSON message arrives, the page sends the next frame. Only one frame is in transit at a time, so no queue builds up.</li>
+  <li>The page loads the logits into a WebGL2 <code>R16F</code> texture.</li>
+  <li>A fragment shader upsamples the texture bilinearly, keeps the pixels with a logit above 0 and colours them blue.</li>
+</ol>
+<p>The page draws the mask on the live video. The mask therefore comes from a frame that is one round trip older than the image below it.</p>
+<h3>8.1 Why raw logits</h3>
+<p>The server sends the small mask grid. It does not send a full-size mask image. This design removes the PNG encode on spark2 and the image decode in the browser. The shader does the same bilinear upsample that the server did before (<code>F.interpolate(..., align_corners=False)</code>). The result is the same mask: the IoU is 1.0 over 100 frames for EfficientTAM-S and for SAM2.1. An earlier test with uint8 logits moved the mask edges (IoU 0.91). For this reason, the format is float16.</p>
+<table>
+  <tr><th>Model</th><th>Mask grid</th><th>Bytes per reply</th></tr>
+  <tr><td>EfficientTAM-Ti / S</td><td class="n">128 × 128</td><td class="n">32 KiB</td></tr>
+  <tr><td>SAM2.1 small</td><td class="n">256 × 256</td><td class="n">128 KiB</td></tr>
+  <tr><td>SAM3</td><td class="n">288 × 288</td><td class="n">162 KiB</td></tr>
+</table>
+<p>A camera frame is approximately 29 KiB as JPEG.</p>
+
+<h2 id="protocol">9. WebSocket messages</h2>
+<p>The page connects to <code>ws://localhost:8765/ws</code>. Coordinates are relative to the frame: 0 is the left or top edge, 1 is the right or bottom edge.</p>
+<h3>9.1 Page to server</h3>
+<table>
+  <tr><th>Message</th><th>Type</th><th>Function</th></tr>
+  <tr><td>JPEG bytes</td><td>binary</td><td>One camera frame.</td></tr>
+  <tr><td><code>{"x": 0.42, "y": 0.61}</code></td><td>text</td><td>Point prompt.</td></tr>
+  <tr><td><code>{"box": [x0, y0, x1, y1]}</code></td><td>text</td><td>Box prompt.</td></tr>
+  <tr><td><code>{"x": 0.42, "y": 0.61, "obj": "new"}</code><br><code>{"box": [...], "obj": "new"}</code></td><td>text</td><td>Add one more object. Without a track, it starts a track. The server ignores it after 8 objects.</td></tr>
+  <tr><td><code>{"x": 0.42, "y": 0.2, "add": 1}</code></td><td>text</td><td>Correction point on object <code>k</code> (default 1): <code>1</code> adds, <code>0</code> removes. The full message is <code>{"x", "y", "add", "obj": k}</code>. The server applies it before the next frame and ignores an unknown <code>k</code>. Without a track, an add point starts a track, and the server ignores a remove point.</td></tr>
+  <tr><td><code>{"text": "dark bird . rocks"}</code><br><code>{"text": "cup", "obj": "new"}</code></td><td>text</td><td>Query, with an optional number <code>"id"</code> that the reply sends back. The detector runs on the next frame. Without <code>"obj": "new"</code>, the found boxes start a new track. With it, they are added to the current track. The text must be a string of 200 characters or less. The query runs on one frame only, also if that frame fails. A model change, a new prompt, a clear or a new query (also one that is not valid) before that frame cancels the query. A correction point does not cancel it.</td></tr>
+  <tr><td><code>{"remove": 2}</code></td><td>text</td><td>Stop the tracking of object 2. The other objects continue. The server ignores an unknown number. It does not cancel a query.</td></tr>
+  <tr><td><code>{}</code></td><td>text</td><td>Clear the selection.</td></tr>
+  <tr><td><code>{"model": "etam-ti"}</code></td><td>text</td><td>Change the model. Valid values: <code>etam-ti</code>, <code>etam-s</code>, <code>sam2</code>, <code>sam3</code>, and the <code>--model</code> value at start.</td></tr>
+</table>
+<p>The server checks each text message before it uses it. Coordinates must be numbers. A box must have 4 numbers. <code>obj</code> and <code>remove</code> must be whole numbers of 1 or more (or <code>"new"</code> for <code>obj</code>). The model must be a string. The server answers a message that is not valid with <code>{"message_error": "bad message: ..."}</code> and keeps the connection (9.3).</p>
+<p>When the server accepts a viewer, it clears the track. A page that loads again starts without objects.</p>
+<h3>9.2 Server to page</h3>
+<table>
+  <tr><th>Message</th><th>When</th></tr>
+  <tr><td><code>{"models": [{"id", "label", "hint"}, ...], "model": "etam-s"}</code></td><td>On connection. It gives the model list and the active model.</td></tr>
+  <tr><td><code>{"ms": 10.9, "areas": [0.022, 0.061], "labels": ["", "cup"], "ids": [1, 3], "w": 128, "h": 128}</code></td><td>After each frame with a selection. <code>areas</code> has one value for each object, in object order. <code>ids</code> has the object number of each grid. <code>labels</code> has the detector label of each object, or an empty string for an object from a click or a box. A binary message follows it: one <code>w × h</code> grid of float16 logits for each object, one after the other.</td></tr>
+  <tr><td><code>{"ms": 0.9, "areas": [], "labels": [], "ids": []}</code></td><td>After each frame without a selection. No binary message follows it.</td></tr>
+  <tr><td><code>{"ms": 205.3, "areas": [...], "w": 128, "h": 128, "found": [{"label": "dark bird", "score": 0.67}, {"label": "dark bird", "score": 0.52}]}</code></td><td>After the frame on which the detector ran. <code>found</code> lists the new objects in object order. <code>"found": []</code> means that the query added no object. The detector found nothing, or in <b>Object</b> mode all boxes covered tracked objects or no object was free. <code>find_id</code> is the <code>id</code> of the query. If the detector failed on that frame, the message also has <code>"find_error"</code>, and tracking continues.</td></tr>
+  <tr><td><code>{"find_error": "..."}</code></td><td>After a query that is not valid (not a string, too long, no names), or when the detector cannot load. The message has the <code>find_id</code> of the query. The current track stays.</td></tr>
+  <tr><td><code>{"model": "etam-ti"}</code></td><td>After a model change.</td></tr>
+  <tr><td><code>{"model": "etam-s", "error": "..."}</code></td><td>After a failed model change. The value of <code>model</code> is the model that stays active.</td></tr>
+  <tr><td>HTTP 403</td><td>On connection from a page of a different site (its <code>Origin</code> is not <code>localhost</code> or <code>127.0.0.1</code>). Browsers let any site open a WebSocket to <code>localhost</code>. This check stops other sites from using the tracker.</td></tr>
+  <tr><td><code>{"message_error": "bad message: ..."}</code></td><td>After a text message that is not valid (9.1). This message is not a reply to a frame. The page shows the text and does not send a frame for it.</td></tr>
+  <tr><td><code>{"error": "tracking failed, track cleared: ...", "find_id": 3}</code></td><td>After a frame on which the tracker failed. The server clears the track, because the failure can leave the track half changed. Select the object again.</td></tr>
+  <tr><td>Close with code <code>4001</code></td><td>On connection, when a different viewer is connected. The page tries again every 2 seconds.</td></tr>
+  <tr><td><code>{"error": "bad frame: ...", "find_id": 3}</code></td><td>After a frame that nvJPEG cannot decode. The next good frame works normally. If a query was to run on that frame, the query is lost, and <code>find_id</code> is its <code>id</code>.</td></tr>
+</table>
+<div class="box warning"><b>Warning</b><p>The detector ID is fixed in <code>live.py</code> (<code>DETECTOR</code>). Do not take a detector ID from a message. A page could then make spark2 download any repository.</p></div>
+<div class="box warning"><b>Warning</b><p>The server accepts only the model IDs in its list. Do not add code that loads a model ID from a message without a check. Such code lets a page make spark2 download any repository.</p></div>
+
+<h3>9.3 Checks on the connection</h3>
+<p>The server checks each connection, each text message and each frame. Figure 20 shows the checks. The expected clients are the page on the Mac and the tests on spark2.</p>
+<figure>
+<svg viewBox="0 0 720 330" role="img" aria-labelledby="f19t">
+  <title id="f19t">Checks of the server: origin, one viewer and track clear on connection; message types, frame decode and tracker failure for each message</title>
+  <defs><marker id="ar19" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+  <g style="color: var(--muted)">
+  <rect class="grp" x="10" y="12" width="340" height="306" rx="10"/><text class="ttl" x="24" y="34">On connection (ws_handler)</text>
+  <rect class="hot" x="24" y="50" width="176" height="50" rx="6"/><text x="36" y="72">1. Origin check</text><text class="sub" x="36" y="90">localhost, 127.0.0.1 or none</text>
+  <rect class="hot" x="24" y="130" width="176" height="50" rx="6"/><text x="36" y="152">2. One viewer</text><text class="sub" x="36" y="170">is the viewer slot free?</text>
+  <rect class="hot" x="24" y="210" width="176" height="50" rx="6"/><text x="36" y="232">3. Clear the track</text><text class="sub" x="36" y="250">then send the model list</text>
+  <path class="ln" d="M112 100 V126" marker-end="url(#ar19)"/><path class="ln" d="M112 180 V206" marker-end="url(#ar19)"/>
+  <rect class="blk" x="226" y="50" width="112" height="50" rx="6"/><text x="238" y="72">HTTP 403</text><text class="sub" x="238" y="90">other site</text>
+  <rect class="blk" x="226" y="130" width="112" height="50" rx="6"/><text x="238" y="152">Close 4001</text><text class="sub" x="238" y="170">"Busy · retrying"</text>
+  <path class="ln" d="M200 75 H222" marker-end="url(#ar19)"/><path class="ln" d="M200 155 H222" marker-end="url(#ar19)"/>
+  <text class="sub" x="24" y="290">Arrow down: check passed.</text><text class="sub" x="24" y="306">Arrow right: result when the check fails.</text>
+  <rect class="grp" x="370" y="12" width="340" height="306" rx="10"/><text class="ttl" x="384" y="34">Each message (serve, step)</text>
+  <rect class="hot" x="384" y="50" width="176" height="50" rx="6"/><text x="396" y="72">4. Text: valid()</text><text class="sub" x="396" y="90">types of the fields</text>
+  <rect class="hot" x="384" y="130" width="176" height="50" rx="6"/><text x="396" y="152">5. Frame: decode</text><text class="sub" x="396" y="170">nvJPEG</text>
+  <rect class="hot" x="384" y="210" width="176" height="50" rx="6"/><text x="396" y="232">6. Tracker step</text><text class="sub" x="396" y="250">detector, tracker, pack</text>
+  <path class="ln" d="M472 180 V206" marker-end="url(#ar19)"/><path class="ln" d="M472 260 V280" marker-end="url(#ar19)"/>
+  <text x="396" y="302">Reply + logits</text>
+  <rect class="blk" x="586" y="50" width="112" height="50" rx="6"/><text x="598" y="72">message_error</text><text class="sub" x="598" y="90">connection stays</text>
+  <rect class="blk" x="586" y="130" width="112" height="50" rx="6"/><text x="598" y="152">bad frame</text><text class="sub" x="598" y="170">track stays</text>
+  <rect class="blk" x="586" y="210" width="112" height="50" rx="6"/><text x="598" y="232">tracking failed</text><text class="sub" x="598" y="250">track cleared</text>
+  <path class="ln" d="M560 75 H582" marker-end="url(#ar19)"/><path class="ln" d="M560 155 H582" marker-end="url(#ar19)"/><path class="ln" d="M560 235 H582" marker-end="url(#ar19)"/>
+  </g>
+</svg>
+<figcaption>Figure 20. Checks of the server. The numbers agree with the table below. A text message that passes check 4 changes the prompt, the objects or the model (9.1).</figcaption>
+</figure>
+<table>
+  <tr><th>No.</th><th>Check</th><th>Code</th><th>Result for the page</th><th>Reason</th></tr>
+  <tr><td>1</td><td>The <code>Origin</code> header is <code>localhost</code> or <code>127.0.0.1</code>, or there is no header.</td><td><code>ws_handler()</code></td><td>Other origin: HTTP 403. The browser shows the close code 1006.</td><td>A browser lets a page of any site open a WebSocket to <code>localhost</code>. Without this check, a different site in the same browser can send frames, load models and take the viewer slot. It cannot see the camera.</td></tr>
+  <tr><td>2</td><td>No other viewer is connected.</td><td><code>ws_handler()</code></td><td>Close code 4001. The page shows "Busy · retrying" and tries again every 2 seconds (Figure 21).</td><td>All viewers use one shared tracker. A second viewer changes the track of the first viewer.</td></tr>
+  <tr><td>3</td><td>None. The server clears the track of the active model.</td><td><code>ws_handler()</code></td><td>The page starts with no objects.</td><td>Without this step, a page that loads again receives the objects of the last viewer.</td></tr>
+  <tr><td>4</td><td>Each field has the correct type (9.1).</td><td><code>valid()</code></td><td><code>{"message_error": "bad message: ..."}</code>. The connection stays (Figure 22).</td><td>A field with a wrong type caused an exception. The exception closed the connection, and the page showed "spark2 offline".</td></tr>
+  <tr><td>5</td><td>nvJPEG can decode the frame.</td><td><code>step()</code>, <code>BadFrame</code></td><td><code>{"error": "bad frame: ..."}</code>. The track stays.</td><td>One bad frame does not change the track. The next good frame works normally.</td></tr>
+  <tr><td>6</td><td>The detector, the tracker and the packing do not fail.</td><td><code>serve()</code></td><td><code>{"error": "tracking failed, track cleared: ..."}</code>. The track is empty.</td><td>A failure can leave the track half changed. Then the next frames fail too. A clear track stops this.</td></tr>
+</table>
+<figure>
+  <img src="img/ui_busy.jpg" alt="The live page with the status Busy · retrying and the notice: Another tab or browser is connected. Close it to use this page." width="900" height="450">
+  <figcaption>Figure 21. A second tab of the live app. The status shows "Busy · retrying". The notice tells you to close the other tab. The page connects automatically when the first tab closes.</figcaption>
+</figure>
+<figure>
+  <img src="img/ui_badmsg.jpg" alt="The live page tracks the left bird and shows the notice: Server: bad message" width="900" height="450">
+  <figcaption>Figure 22. The answer to a message that is not valid. For this figure, the message <code>{"x": "left"}</code> was sent from the browser console. The notice shows the message. Tracking continues.</figcaption>
+</figure>
+<p>To do a check of the connection protection, do these steps:</p>
+<ol class="steps">
+  <li>Run <code>./test_spark2.sh -k test_ws</code>.</li>
+  <li>Make sure that the output shows <code>OK</code>.</li>
+</ol>
+<p>These tests in <code>tests/test_ws.py</code> cover the checks: <code>test_other_sites_are_refused</code> (1), <code>test_second_viewer_is_refused</code> (2), <code>test_new_viewer_starts_clean</code> (3), <code>test_bad_messages_are_answered</code> (4), <code>test_bad_frame_consumes_the_query</code> (5) and <code>test_tracking_failure_clears_the_track</code> (6).</p>
+<div class="box note"><b>Note</b><p>A connection without an <code>Origin</code> header passes check 1. A browser always sends this header. Scripts and the tests do not send it. The server has no password. The bind to 127.0.0.1 and the SSH tunnel limit the access to spark2 and the Mac.</p></div>
+<div class="box warning"><b>Warning</b><p>Do not remove the origin check. Do not bind the server to <code>0.0.0.0</code>. Each change lets other people or other sites use the GPU and the tracker.</p></div>
+
+<h2 id="performance">10. Performance</h2>
+<h3>10.1 Offline benchmark</h3>
+<p>Conditions: 2026-11-04, spark2 GB10, torch 2.14.1+cu130, <code>albatross.mp4</code> (300 frames, 960 × 540), one object (<code>--point 470,260</code>).</p>
+<table>
+  <tr><th>Model</th><th>FPS (runs 0, 1, 2)</th><th>Peak GPU memory</th></tr>
+  <tr><td>EfficientTAM-S 512</td><td class="n">94.3 / 78.5 / 102.9</td><td class="n">1282 MiB</td></tr>
+  <tr><td>EfficientTAM-Ti 512</td><td class="n">111.0 / 93.6 / 112.3</td><td class="n">1218 MiB</td></tr>
+  <tr><td>SAM3 tracker (1008, bf16)</td><td class="n">2.7 / 2.7 / 2.7</td><td class="n">9344 MiB</td></tr>
+</table>
+<p>On <code>garbage_cans.mp4</code> (321 frames, 720 × 1280), EfficientTAM-S runs at 102–105 FPS with one object and at 61.8 FPS with two objects in one run. SAM3 runs at 2.7 FPS with one object and at 2.4 FPS with two (5.4).</p>
+<p>On <code>albatross.mp4</code>, EfficientTAM-S runs at 54.9 FPS with two birds in one run. SAM3 runs at approximately 1/38 of the speed of EfficientTAM-S. It gives a better mask: it keeps the spread wing of the bird, and EfficientTAM-S loses part of it in some frames (mask area 3.4% to 4.3% against 2.1% to 3.6%). The SAM3 image encoder alone takes approximately 300 ms for each 1008 × 1008 frame (eager PyTorch, SDPA, not compiled).</p>
+<h3>10.2 Live app</h3>
+<p>Conditions: 2026-11-04, test client on spark2, 640 × 360 JPEG frames from <code>albatross.mp4</code> forward and back, 600 frames, one object with a new box at frame 200. These values do not include the network between the Mac and spark2.</p>
+<table>
+  <tr><th>Model</th><th>Throughput</th><th>Round trip (median)</th></tr>
+  <tr><td>EfficientTAM-Ti 512</td><td class="n">93.0 FPS</td><td class="n">9.7 ms</td></tr>
+  <tr><td>EfficientTAM-S 512</td><td class="n">83.4 FPS</td><td class="n">10.9 ms</td></tr>
+  <tr><td>SAM2.1 small</td><td class="n">19.2 FPS</td><td class="n">50.7 ms</td></tr>
+  <tr><td>SAM3 tracker</td><td class="n">2.9 FPS</td><td class="n">341 ms</td></tr>
+</table>
+<p>The round trip stays constant over 600 frames for all models. In the browser, the camera frame rate (usually 30 FPS) limits the throughput.</p>
+<p>SAM2.1 small uses approximately 50 ms for each frame. In an earlier measurement, preprocessing took 2 ms and the image encoder took 21 ms. Memory attention, the mask decoder and overhead use the remaining time. SAM2.1 tiny is not faster (47.8 ms).</p>
+
+<h3>10.3 More than one object</h3>
+<p>Conditions: 2026-11-04, <code>step()</code> of the tracker and copy to the CPU on spark2, 640 × 360 frames from <code>albatross.mp4</code>, 100 frames after one warm-up pass. Objects: the two dark birds and two birds behind them. These values do not include JPEG decode or the network.</p>
+<table>
+  <tr><th>Model</th><th>1 object</th><th>2 objects</th><th>4 objects</th></tr>
+  <tr><td>EfficientTAM-Ti 512</td><td class="n">118.7 FPS</td><td class="n">68.2 FPS</td><td class="n">36.6 FPS</td></tr>
+  <tr><td>EfficientTAM-S 512</td><td class="n">101.6 FPS</td><td class="n">62.1 FPS</td><td class="n">34.5 FPS</td></tr>
+  <tr><td>SAM2.1 small</td><td class="n">20.6 FPS</td><td class="n">13.3 FPS</td><td class="n">7.7 FPS</td></tr>
+</table>
+<p>Each added object costs approximately as much time as the first object costs without the image encoder. For EfficientTAM, the image encoder is small, so the time grows almost in proportion to the number of objects.</p>
+
+<h3>10.4 Detector</h3>
+<p>Bake-off conditions: 2026-11-04, frames 0, 75 and 150 of <code>albatross.mp4</code> at 640 × 360, the names <code>albatross</code> and <code>rocks</code>, and three objects: the two dark birds and the rock pile. The reference box of each object comes from its EfficientTAM-S track. IoU is the best box with the correct label against the reference box, averaged over the 9 pairs of object and frame. On frame 150, all detectors give IoU 0.60 or 0.61 for the right bird, so this value probably comes from the reference box. It lowers all averages. Latency is the median of 20 runs after 3 warm-up runs. All models run with Hugging Face transformers 5.22.1 and torch 2.14.1 + cu130.</p>
+<table>
+  <tr><th>Detector</th><th>Licence</th><th>LVIS minival AP (published)</th><th>IoU on albatross</th><th>bf16</th><th>fp32</th><th>Peak GPU memory</th><th>Host</th></tr>
+  <tr><td>Grounding DINO tiny</td><td>Apache-2.0</td><td class="n">–</td><td class="n">0.846</td><td class="n">207 ms</td><td class="n">267 ms</td><td class="n">1.9 GB</td><td>spark3</td></tr>
+  <tr><td>MM Grounding DINO tiny</td><td>Apache-2.0</td><td class="n">41.4</td><td class="n">0.868</td><td class="n">207 ms</td><td class="n">269 ms</td><td class="n">1.9 GB</td><td>spark3</td></tr>
+  <tr><td><b>LLMDet tiny</b> (used)</td><td>Apache-2.0</td><td class="n">50.7</td><td class="n">0.866</td><td class="n">208 ms</td><td class="n">269 ms</td><td class="n">1.9 GB</td><td>spark3</td></tr>
+  <tr><td>LLMDet base</td><td>Apache-2.0</td><td class="n">54.3</td><td class="n">0.878</td><td class="n">243 ms</td><td class="n">332 ms</td><td class="n">2.1 GB</td><td>spark3</td></tr>
+  <tr><td>OmDet-Turbo tiny</td><td>Apache-2.0, needs <code>timm</code></td><td class="n">–</td><td class="n">0.540</td><td class="n">33 ms</td><td class="n">42 ms</td><td class="n">0.6 GB</td><td>spark3</td></tr>
+  <tr><td>SAM3 image model (reference)</td><td>SAM licence, gated</td><td class="n">–</td><td class="n">0.894</td><td class="n">685 ms</td><td class="n">–</td><td class="n">2.0 GB</td><td>spark2</td></tr>
+</table>
+<p>All detectors except OmDet-Turbo find the three objects with almost the same boxes. OmDet-Turbo does not find <code>rocks</code>, and this gives its low IoU. LLMDet tiny has the widest vocabulary of the small models (LVIS minival AP 50.7), and it needs no new dependency. For this reason, the live app uses it. OmDet-Turbo is 6.3 times faster, but it needs the <code>timm</code> package and has a smaller vocabulary. Because the detector runs one time for each query, 0.2 s is acceptable. SAM3 gives the highest IoU, but it takes 0.7 s for two names and needs <code>HF_TOKEN</code>. Each SAM3 call takes one name, so the time is for three calls.</p>
+<p>The published AP values come from the model cards. "–" means that the model card gives no LVIS minival value in the same form. spark2 and spark3 are the same type of host (GB10).</p>
+<table>
+  <tr><th>End to end, LLMDet tiny + EfficientTAM-S, query <code>dark bird</code> (finds the two dark birds)</th><th>Value</th><th>Host</th></tr>
+  <tr><td>First query: detector load and first pass</td><td class="n">5.7 s</td><td>spark2</td></tr>
+  <tr><td>Time from query to first mask, later queries (WebSocket client)</td><td class="n">232–243 ms</td><td>spark2</td></tr>
+  <tr><td>Server time of the detection frame (decode, detect, track, pack)</td><td class="n">231–242 ms</td><td>spark2</td></tr>
+  <tr><td>Round trip after the query, two objects</td><td class="n">17.3–17.4 ms (57–58 FPS)</td><td>spark2</td></tr>
+  <tr><td>Masks from the query against masks from reference boxes (IoU, 100 frames)</td><td class="n">EfficientTAM-S: left 0.999, right 0.994. SAM2.1: left 0.991, right 0.958.</td><td>spark3 (EfficientTAM-S), spark2 (SAM2.1)</td></tr>
+</table>
+
+<h3>10.5 Crowd test: 22 players</h3>
+<p>This smoke test checks the limits of the method. The clip is an overhead view of a team-sport play (3456 × 2234, 424 frames with content). The test resizes the frames to 1280 × 827. The camera zooms in during the play, and the players make a dense pile at the line. The test ran offline with scratch scripts, outside the live app. The limit of 8 objects does not apply to these scripts. The manual has no images of the clip, because the clip is third-party material.</p>
+<table>
+  <tr><th>Step</th><th>Result</th><th>Host</th></tr>
+  <tr><td>Detector, query <code>player</code>, frame 0</td><td class="n">20 of 22 at a score of 0.35 or more; 22 of 22 at 0.30. At 0.25: 23 boxes (a false box). The query <code>person</code> is worse.</td><td>spark3</td></tr>
+  <tr><td>Detection time</td><td class="n">0.4–0.8 s, one time</td><td>spark2, spark3</td></tr>
+</table>
+<table>
+  <tr><th>Method (22 players)</th><th>Speed</th><th>Objects at the end</th><th>Identity</th><th>Host</th></tr>
+  <tr><td>SAM2.1 small, detect one time, then track</td><td class="n">1.6 FPS</td><td class="n">20 masks</td><td>2 jumps above 40 px. The 2 lost players went out of the frame during the zoom. In the pile, some tracks move to a different player.</td><td>spark2</td></tr>
+  <tr><td>EfficientTAM-S, detect one time, then track</td><td class="n">6.8 FPS</td><td class="n">19 masks</td><td>18 jumps. Masks join on players in the pile.</td><td>spark3</td></tr>
+  <tr><td>SAM2.1 + detector every 15 frames + Hungarian match on box IoU (prototype)</td><td class="n">1.3 FPS</td><td class="n">29 masks for approximately 22 players</td><td>Duplicate masks: in the pile, the box of a mask often has an IoU below 0.3 with the detector box of the same player.</td><td>spark2</td></tr>
+  <tr><td>EfficientTAM-S + detector every 15 frames + comparison of the new masks + end of stopped tracks (<code>--redetect 15</code>, 5.8). Query for players, threshold 0.30, 243 frames at 1280 × 718.</td><td class="n">2.8 FPS</td><td class="n">27 objects in all</td><td>78 duplicates and 5 background masks removed. Masks still join in the pile. Jumps not measured.</td><td>spark2</td></tr>
+  <tr><td>YOLO26m + ByteTrack (comparison only)</td><td class="n">70.8 FPS</td><td class="n">13 boxes</td><td>66 track IDs for 22 players</td><td>spark3</td></tr>
+  <tr><td>YOLO26m + BoT-SORT (comparison only)</td><td class="n">58.2 FPS</td><td class="n">15 boxes</td><td>65 track IDs</td><td>spark3</td></tr>
+  <tr><td>YOLO26m + BoT-SORT with re-identification (comparison only)</td><td class="n">56.0 FPS</td><td class="n">14 boxes</td><td>81 track IDs</td><td>spark3</td></tr>
+</table>
+<p>Results:</p>
+<ul>
+  <li>The detector finds all players on the first frame when the box threshold is 0.30.</li>
+  <li>Mask tracking keeps the identity of most players, but its time grows with each object. 22 objects are too many for the live app.</li>
+  <li>The prototype with periodic detection added duplicates, because it matched on box IoU. <code>track.py --redetect</code> compares the new masks and ends stopped tracks (5.8). It is not in the live app: the detector stops the frame loop for approximately 0.2 s each time, and more objects make each frame slower.</li>
+  <li>YOLO with ByteTrack or BoT-SORT runs in real time, but it gives boxes only and breaks the identity of each player approximately 3 times. This project does not use YOLO (14.3).</li>
+</ul>
+
+<h2 id="troubleshooting">11. Troubleshooting</h2>
+<table>
+  <tr><th>Symptom</th><th>Possible cause</th><th>Action</th></tr>
+  <tr><td>Status shows "Camera blocked".</td><td>The browser did not get camera permission.</td><td>Allow the camera in the browser settings for <code>localhost:8765</code>. Load the page again.</td></tr>
+  <tr><td>Status shows "Camera unavailable".</td><td>The page does not come from <code>localhost</code>.</td><td>Open <code>http://localhost:8765</code>. Do not use the IP address of spark2.</td></tr>
+  <tr><td>Status shows "spark2 offline · retrying".</td><td>The server or the tunnel is not running.</td><td>Start the launcher (6.1). The page connects again automatically.</td></tr>
+  <tr><td>Message "Server: bad message: ...".</td><td>The page sent a text message with a wrong type. This can occur after a change to <code>live.html</code>.</td><td>Read the message in the notice. Correct the page code (9.1, 9.3).</td></tr>
+  <tr><td>A WebSocket client gets HTTP 403.</td><td>The client sent the <code>Origin</code> of a different site.</td><td>Open the page from <code>http://localhost:8765</code>. In a script, do not send an <code>Origin</code> header (9.3).</td></tr>
+  <tr><td>The personal data removal shows "pixelated 0 boxes".</td><td>The detector found no plate, number or face on the subject, or the pixelation step did not run.</td><td>Look at the review sheet. If the subject has text or a face, do not use the video (5.5).</td></tr>
+  <tr><td>Message "Server: tracking failed, track cleared".</td><td>The tracker failed on a frame. The server cleared the track.</td><td>Select the object again. If the message comes back, send the text of the message to the developer.</td></tr>
+  <tr><td>Status shows "Busy · retrying".</td><td>A different tab or browser is connected to the server.</td><td>Close the other tab. This page then connects automatically.</td></tr>
+  <tr><td>Status stays at "Connecting" for a long time.</td><td>The server compiles EfficientTAM at start.</td><td>Wait up to one minute.</td></tr>
+  <tr><td>The launcher stops with a port error.</td><td>A different program uses port 8765 on the Mac.</td><td>Start with <code>PORT=8770 ./live_spark2.sh</code>.</td></tr>
+  <tr><td>Message "cannot load SAM3".</td><td><code>HF_TOKEN</code> is missing or has no access to <code>facebook/sam3</code>.</td><td>Set <code>HF_TOKEN</code> in the terminal. Start the launcher again.</td></tr>
+  <tr><td>Message "WebGL2 unavailable".</td><td>The browser does not support WebGL2, or it is disabled.</td><td>Use a current version of Chrome or Safari.</td></tr>
+  <tr><td>The mask spreads into the background or goes to a different object.</td><td>The memory bank lost the object (7.5).</td><td>Use a remove point on the wrong area (6.3). If the mask stays wrong, push <kbd>Esc</kbd> and select the object again with a box.</td></tr>
+  <tr><td>Message "Nothing found for ...".</td><td>No box has a score of 0.35 or more.</td><td>Use one simple noun, for example <code>cup</code>. Make sure that the object is visible and not too small.</td></tr>
+  <tr><td>A query finds the wrong object.</td><td>A different object looks like the name (low score).</td><td>Push <kbd>Esc</kbd>. Select the object with a box, or use <b>Object</b> mode with a box. You can also use correction points (6.3).</td></tr>
+  <tr><td>The first query takes approximately 5 seconds.</td><td>The server loads the detector at the first query.</td><td>Wait. The next queries take approximately 0.2 seconds.</td></tr>
+  <tr><td>On a new host, <code>torch.compile</code> stops with <code>Python.h: No such file or directory</code>.</td><td>The system Python has no development headers (spark3).</td><td>Do not install system packages. Run <code>uv python install 3.12</code>, then <code>UV_PYTHON_PREFERENCE=only-managed uv sync --python 3.12</code> on that host.</td></tr>
+  <tr><td>On a new host, <code>torch.compile</code> stops with <code>PermissionError</code> in <code>~/.triton/cache</code>.</td><td>A different process made the cache as root (spark3).</td><td>Do not change the root files. Set <code>TRITON_CACHE_DIR=$HOME/.cache/triton-trackanything</code> for the run.</td></tr>
+  <tr><td><code>track.py</code> stops with "nothing found for ...".</td><td>The detector found no box with a score of <code>--threshold</code> or more on frame 0.</td><td>Use a simple noun, or give a lower <code>--threshold</code>, for example 0.30.</td></tr>
+  <tr><td>The personal data removal stops with "subject ... not found on frame 0".</td><td>The subject is not visible on frame 0, or its score is low.</td><td>Use a different name, or give a lower <code>--subject-threshold</code>. Cut the clip so that frame 0 shows the subject.</td></tr>
+  <tr><td>The output shows "tags left:" with tags.</td><td>The encoder kept metadata.</td><td>Do not use the video. Report the tags.</td></tr>
+  <tr><td>An object has frames with "no detection of its own".</td><td>The detector found no text or face on the object in these frames.</td><td>If the object has no text, this is correct. Else, look at these frames in the video.</td></tr>
+  <tr><td>Message "WARNING: could not confirm cleanup".</td><td>The launcher could not delete the private directory on spark2.</td><td>Delete the directory that the message shows. Else, a timer deletes it after 6 hours.</td></tr>
+  <tr><td>Message "needs ffmpeg".</td><td>The tool ran without the launcher, and the host has no <code>ffmpeg</code>.</td><td>Use <code>anonymize_spark2.sh</code>, or run the tool with <code>uv run --with imageio-ffmpeg</code>.</td></tr>
+  <tr><td>The mask is empty while the object is visible.</td><td>The object score is below the limit after an occlusion.</td><td>Select the object again.</td></tr>
+</table>
+
+<h2 id="files">12. Files</h2>
+<table>
+  <tr><th>File</th><th>Contents</th></tr>
+  <tr><td><code>track.py</code></td><td>Offline benchmark: points, boxes and text on frame 0, one or more objects, and corrections on later frames (<code>correct()</code>, which uses <code>as_cond_frame()</code> of <code>live.py</code>). It also has <code>load_efficienttam()</code>, which <code>live.py</code> and <code>tools/anonymize.py</code> use.</td></tr>
+  <tr><td><code>live.py</code></td><td>Live server: <code>decode()</code>, <code>pack()</code>, <code>prune()</code>, <code>Prompted</code> (with <code>add_boxes()</code> and <code>fix()</code>), <code>as_cond_frame()</code> and <code>anchor()</code> (correction step, 7.7), <code>Tracker</code>, <code>EfficientTAMTracker</code>, <code>mask_boxes()</code>, <code>valid()</code> and <code>parse_query()</code> (message checks), <code>switch()</code>, <code>step()</code> with <code>BadFrame</code>, <code>ws_handler()</code> and <code>serve()</code> (connection checks, 9.3).</td></tr>
+  <tr><td><code>live.html</code></td><td>The page: camera capture, WebGL2 mask shader, model picker, click modes, <b>Find</b> field, object chips and panels. Plain JavaScript, no build step.</td></tr>
+  <tr><td><code>live_spark2.sh</code></td><td>Live launcher (sync, server, tunnel, browser).</td></tr>
+  <tr><td><code>run_spark2.sh</code></td><td>Offline launcher (sync, <code>track.py</code>, copy of results).</td></tr>
+  <tr><td><code>configs/</code></td><td>Copies of the two EfficientTAM 512 × 512 Hydra configs. The upstream wheel does not contain them.</td></tr>
+  <tr><td><code>pyproject.toml</code>, <code>uv.lock</code></td><td>Dependencies. EfficientTAM is pinned to <code>abcd061</code>. torch comes from the cu130 index on Linux.</td></tr>
+  <tr><td><code>detector.py</code></td><td>The text detector (<code>Detector</code>, LLMDet tiny) and <code>split_names()</code>. <code>live.py</code>, <code>track.py</code> and <code>tools/anonymize.py</code> use it.</td></tr>
+  <tr><td><code>tools/anonymize.py</code>, <code>anonymize_spark2.sh</code></td><td>Personal data removal for new sample videos, and its launcher for spark2 (5.5).</td></tr>
+  <tr><td><code>data/albatross.mp4</code></td><td>Sample video: two albatrosses, 960 × 540, 300 frames, public domain (USFWS Pacific Region, video by Dan Rapp). The README images use it. It has no people.</td></tr>
+  <tr><td><code>data/garbage_cans.mp4</code></td><td>Sample video: two garbage cans, portrait, 321 frames. Personal data removed (5.4, 5.5).</td></tr>
+  <tr><td><code>tests/</code>, <code>test_spark2.sh</code></td><td>Automated tests and their launcher for spark2 or spark3 (5.6).</td></tr>
+  <tr><td><code>results/</code></td><td>Output videos. Git ignores this folder.</td></tr>
+  <tr><td><code>LICENSE</code>, <code>NOTICE</code></td><td>The Apache 2.0 license of the project, and the list of third-party material.</td></tr>
+</table>
+
+<h2 id="limits">13. Limits and notes</h2>
+<ul>
+  <li>The server has no password. It accepts pages from <code>localhost</code> only, and connections without an <code>Origin</code> header (9.3). Programs on the Mac and on spark2 can connect.</li>
+  <li>The server has one shared tracker, so it accepts one viewer at a time. It closes a second connection with code 4001 (9.2). The second page shows "Busy · retrying" and connects when the first page closes.</li>
+  <li>A track has a maximum of 8 objects at a time. You can remove one object (6.4) and then add a different one.</li>
+  <li>The time for each frame grows with the number of objects. A crowd of 22 players runs at 1.6 to 6.8 FPS (10.5).</li>
+  <li><code>track.py --text</code> detects on frame 0 only. Use <code>--redetect</code> for objects that come into the frame later (5.8). The live app has no such option: a query runs one time.</li>
+  <li>The detector runs one time for each query. It does not search the next frames for new objects. <code>track.py --text</code> also uses frame 0 only.</li>
+  <li><code>track.py</code> has no limit on the number of objects. Objects 1 to 8 have the colours of the live page. Objects after 8 get generated colours.</li>
+  <li>The personal data removal needs a check by a person. It can miss text, and it blurs a subject that the tracker loses.</li>
+  <li>The detector runs with PyTorch in bf16. There is no TensorRT engine. The detector stays in GPU memory (approximately 1.8 GB) after the first query.</li>
+  <li>Each loaded model stays in GPU memory until the server stops. All four models fit in the 128 GB of the GB10.</li>
+  <li>The upstream CUDA extension <code>_C</code> is not built. EfficientTAM therefore does not fill holes in the mask. It shows a warning and continues.</li>
+  <li><code>torch.compile</code> works for the EfficientTAM image encoder. It fails for the SAM2.1 encoder on the Triton version of spark2 (<code>KeyError: triton.language.bfloat16</code>). SAM2.1 therefore runs without compilation.</li>
+  <li>If you change the pinned EfficientTAM revision, copy the matching configs into <code>configs/</code>.</li>
+  <li>The live performance values come from a client on spark2. The network between the Mac and spark2 adds time.</li>
+</ul>
+
+<h2 id="references">14. References and applicable methods</h2>
+<p>This section lists four related projects. It also shows which of their methods this project uses, and which methods it can add.</p>
+
+<h3>14.1 References</h3>
+<table>
+  <tr><th>Project</th><th>Models</th><th>Paper</th><th>License</th></tr>
+  <tr><td><a href="https://ai.meta.com/research/sam2/">SAM 2</a> (Meta)</td><td>One model: image encoder, streaming memory, mask decoder</td><td>arXiv 2408.00714</td><td>Apache 2.0</td></tr>
+  <tr><td><a href="https://yformer.github.io/efficient-track-anything/">EfficientTAM</a> (Meta, NTU)</td><td>SAM 2 design with a plain ViT encoder and efficient memory cross-attention</td><td>arXiv 2411.18933</td><td>Apache 2.0</td></tr>
+  <tr><td><a href="https://github.com/gaomingqi/Track-Anything">Track-Anything</a></td><td>SAM (key frame) + XMem (propagation) + E2FGVI (inpainting)</td><td>arXiv 2304.11968</td><td>MIT</td></tr>
+  <tr><td><a href="https://github.com/z-x-yang/Segment-and-Track-Anything">Segment-and-Track-Anything</a></td><td>SAM + DeAOT (propagation) + Grounding-DINO (text) + AST (audio)</td><td>arXiv 2305.06558</td><td>AGPL-3.0</td></tr>
+  <tr><td><a href="https://arxiv.org/abs/2303.05499">Grounding DINO</a> (IDEA)</td><td>Open-set detector: DINO detector with text fusion</td><td>arXiv 2303.05499</td><td>Apache-2.0</td></tr>
+  <tr><td><a href="https://huggingface.co/docs/transformers/model_doc/mm-grounding-dino">MM Grounding DINO</a> (OpenMMLab)</td><td>Open re-implementation of Grounding DINO with better training</td><td>arXiv 2401.02361</td><td>Apache-2.0</td></tr>
+  <tr><td><a href="https://huggingface.co/iSEE-Laboratory/llmdet_tiny">LLMDet</a> (iSEE)</td><td>MM Grounding DINO trained with captions from a large language model. Used here (tiny).</td><td>arXiv 2501.18954</td><td>Apache-2.0</td></tr>
+  <tr><td><a href="https://huggingface.co/docs/transformers/model_doc/omdet-turbo">OmDet-Turbo</a></td><td>Real-time open-vocabulary detector with cached text embeddings</td><td>arXiv 2403.06892</td><td>Apache-2.0</td></tr>
+  <tr><td><a href="https://arxiv.org/abs/2405.10300">Grounding DINO 1.5</a> (IDEA)</td><td>Pro and Edge detectors. Weights not published (API only).</td><td>arXiv 2405.10300</td><td>API</td></tr>
+  <tr><td><a href="https://docs.ultralytics.com/models/yoloe">YOLOE</a> (Ultralytics)</td><td>Real-time open-vocabulary detection and segmentation. Not used: licence (no Ultralytics licence for this project).</td><td>–</td><td>AGPL-3.0</td></tr>
+  <tr><td><a href="https://github.com/IDEA-Research/Grounded-SAM-2">Grounded-SAM-2</a> (IDEA)</td><td>Grounding DINO boxes as prompts for SAM 2: the "detect, then track" method used here</td><td>–</td><td>Apache-2.0</td></tr>
+</table>
+<p>Track-Anything and Segment-and-Track-Anything are from 2023. They use two models: SAM makes the mask on a key frame, and a separate tracker moves the mask to the next frames. SAM 2 and EfficientTAM do both tasks in one model. This project uses SAM 2 and EfficientTAM.</p>
+<div class="box caution"><b>Caution</b><p>Segment-and-Track-Anything and YOLOE are AGPL-3.0. Do not copy their code into this project, and do not add them as dependencies. Use their methods only.</p></div>
+<p>There is no "Grounding DINO 3". The newest IDEA detectors (Grounding DINO 1.5 and 1.6 Pro, DINO-X) are available only through an API, with no published weights. For this reason, this project uses the open models of the same family (MM Grounding DINO, LLMDet).</p>
+
+<h3>14.2 Methods that this project uses</h3>
+<table>
+  <tr><th>Method</th><th>Source</th><th>Where in this project</th></tr>
+  <tr><td>Streaming memory: one frame at a time, memory bank of past masks</td><td>SAM 2</td><td>All trackers. See section 7.</td></tr>
+  <tr><td>Light image encoder and efficient memory attention</td><td>EfficientTAM</td><td>Models <code>etam-ti</code> and <code>etam-s</code></td></tr>
+  <tr><td>Object score: mask is empty when the object is hidden</td><td>SAM 2</td><td>All trackers. See section 7.2.</td></tr>
+  <tr><td>Memory with a fixed limit: keep the prompt frame, remove old frames</td><td>SAM 2; also <code>max_len_long_term</code> in Segment-and-Track-Anything</td><td><code>prune()</code> with <code>KEEP=16</code></td></tr>
+  <tr><td>Click to select an object</td><td>All four</td><td>Live app, section 6.2</td></tr>
+  <tr><td>Detect, then track: detector boxes as box prompts</td><td>Grounded-SAM-2, Segment-and-Track-Anything</td><td>Live app, sections 6.5 and 7.6</td></tr>
+</table>
+
+<h3>14.3 Methods that this project can add</h3>
+<table>
+  <tr><th>Method</th><th>Source</th><th>Change in this project</th><th>Work</th><th>Decision</th></tr>
+  <tr><td>Correction points: add positive and negative points on the current frame. The memory stays.</td><td>SAM 2, Track-Anything</td><td>Done. See 6.3 and 7.4.</td><td>Small</td><td>Done</td></tr>
+  <tr><td>More than one object</td><td>All four</td><td>Done. See 6.4, 7.4 and 10.3.</td><td>Medium</td><td>Done</td></tr>
+  <tr><td>Text prompt, for example "cup"</td><td>Segment-and-Track-Anything (Grounding-DINO); SAM3 also accepts text</td><td>Done with a separate detector (LLMDet tiny) and the fast trackers. See 6.5, 7.6 and 10.4. The SAM3 text path stays unused, because it is slow.</td><td>Medium</td><td>Done</td></tr>
+  <tr><td>Go back to a past frame, correct it, and track again</td><td>Segment-and-Track-Anything, Track-Anything</td><td>Done in <code>track.py</code> (<code>--fix</code>, <code>--fix-box</code>). See 5.7. The live app does not keep past frames.</td><td>Small</td><td>Done, offline only</td></tr>
+  <tr><td>Remove one object from a track</td><td>SAM 2 (<code>remove_object</code>), Track-Anything</td><td>Done. See 6.4 and 7.4.</td><td>Small</td><td>Done</td></tr>
+  <tr><td>Detection on each frame with ByteTrack or BoT-SORT (tracking by detection)</td><td>ByteTrack, BoT-SORT, Ultralytics YOLO</td><td>Tested with YOLO26 for comparison only (10.5). Not possible with YOLO: AGPL-3.0, and the project has no Ultralytics licence. A version with an Apache or MIT detector (for example OmDet-Turbo) and an MIT tracker is possible. Check the licences first.</td><td>Medium</td><td>Possible, not with YOLO</td></tr>
+  <tr><td>Periodic detection to correct SAM tracks in crowds</td><td>SAM2MOT, Grounded-SAM-2</td><td>Done offline: <code>track.py --redetect</code> (5.8, 10.5). Not in the live app.</td><td>Medium</td><td>Done, offline only</td></tr>
+  <tr><td>Find new objects at an interval (<code>sam_gap</code>)</td><td>Segment-and-Track-Anything</td><td>Needs a detector or "segment everything" pass. The source reports false objects after approximately 100 frames.</td><td>Large</td><td>Not recommended</td></tr>
+  <tr><td>Remove the object from the video (inpainting)</td><td>Track-Anything (E2FGVI)</td><td>Offline only. Adds a large model and is not real time.</td><td>Large</td><td>Not recommended</td></tr>
+  <tr><td>Run the model on the device</td><td>EfficientTAM (approximately 10 FPS on iPhone 15 Pro Max)</td><td>Needs a model export for the browser. spark2 gives approximately 95 FPS now.</td><td>Large</td><td>Not recommended</td></tr>
+  <tr><td>Select the object that makes a sound</td><td>Segment-and-Track-Anything (AST)</td><td>No audio in the live app.</td><td>Large</td><td>Not recommended</td></tr>
+</table>
+<div class="box note"><b>Note</b><p>The work values in 14.3 are estimates. They are not measured in this project.</p></div>
+
+<h3>14.4 Work list</h3>
+<p>This list shows the order of the work. A checked item is complete.</p>
+<ul class="todo">
+  <li class="done"><b>1. Correction points.</b> Add and remove points on the current track, in the server and the page. Test result on the earlier clip: see the table below.</li>
+  <li class="done"><b>2. More than one object.</b> Up to 8 objects, one logit grid and one colour for each object, correction points for the picked object. Test results: see the second table below.</li>
+  <li class="done"><b>3. Text prompt.</b> A <b>Find</b> field in the page. LLMDet tiny finds the boxes one time, and the tracker follows them. Test results: see the third table below.</li>
+  <li class="done"><b>4. Remove one object.</b> <b>×</b> on a chip, or <kbd>Delete</kbd>. Object numbers and colours stay. Test results: see the fourth table below.</li>
+  <li class="done"><b>8. Offline tools.</b> <code>track.py</code> with more than one object and with names (<code>--text</code>). Personal data removal for sample videos (<code>tools/anonymize.py</code>). Test results: see the fifth table below.</li>
+  <li class="done"><b>5. Better crowd tracking, offline only.</b> <code>track.py --redetect N</code>: periodic detection, comparison of the new masks, end of stopped tracks (5.8, 10.5). Test results: see the eighth table below.</li>
+  <li class="done"><b>6. Go back and correct, offline only.</b> <code>--fix</code> and <code>--fix-box</code> in <code>track.py</code> (5.7). Test results: see the sixth table below.</li>
+  <li class="done"><b>10. Tests and figures on <code>albatross.mp4</code>.</b> The tests, the regression value, the benchmarks and the figures of the live app use this clip. Test results: see the last table below.</li>
+  <li class="done"><b>9. Fixes from the code audit.</b> Origin check, message checks, a clear track for a new viewer and after a tracker failure (9.3). One correction function for the live app and <code>track.py</code> (7.7). A test for the pixelation step of the personal data removal (5.5). Test results: see the seventh table below.</li>
+  <li><b>7. Tracking by detection without YOLO.</b> An Apache or MIT detector on each frame and an MIT ByteTrack, for crowds where speed is more important than identity. Check the licences first.</li>
+</ul>
+<p>Not planned: new objects at an interval, inpainting, the model in the browser, audio selection, and YOLO in any form (licence). See 14.3 for the reasons.</p>
+<p>The tables for items 1 to 4, 6, 8 and 9 are records from the time when each item was complete. Most of them used an earlier sample video of a boy and a girl, which this repository does not contain, so their values and object names do not agree with the current tests.</p>
+<p>Test results for item 1. Each test uses the correction functions of the server (<code>correct()</code> and <code>step()</code>) on 640 × 480 frames. IoU is the overlap with a reference mask: 1.0 is the same mask.</p>
+<table>
+  <tr><th>Test</th><th>Reference</th><th>EfficientTAM-S</th><th>EfficientTAM-Ti</th><th>SAM2.1</th></tr>
+  <tr><td>Point on the dress, then two add points on the head and body at frame 2. IoU over frames 10–119.</td><td>Girl from a box</td><td class="n">0.99 (point gives full girl)</td><td class="n">0.33 → 0.98</td><td class="n">0.34 → 0.99</td></tr>
+  <tr><td>Point on the boy, then two add points on the girl at frame 40. Mask area over frames 80–119.</td><td>Boy only: approximately 1.5%</td><td class="n">1.45% → 7.06%</td><td class="n">1.15% → 6.89%</td><td class="n">1.58% → 6.70%</td></tr>
+  <tr><td>Box on the girl, add the boy at frame 10, remove the boy at frame 20. IoU over frames 22–35.</td><td>Girl from a box</td><td class="n">0.99 (the add had almost no effect)</td><td class="n">0.00–0.42, changes between runs (fail)</td><td class="n">0.00: the add points replace the girl with the boy, then the remove points clear the mask (fail)</td></tr>
+  <tr><td>Box on the girl, two remove points on her head and body at frame 2.</td><td>Expected: dress only</td><td class="n">No change</td><td class="n">1.2%, wrong area (fail)</td><td class="n">No change</td></tr>
+</table>
+<p>A new run of the third test on SAM2.1 (2026-11-03, with the test suite) gave 0.00. The code of item 1 gives the same result, so the earlier value of 0.98 did not come from the shipped code.</p>
+<p>SAM3 ran the first test without errors. Its point on the dress gives the full girl, so the add points do not change the mask.</p>
+<p>Test results for item 2. Object 1 is the boy (a point). Object 2 is the girl (a box), or the girl from a point on her dress. The reference is the same object tracked alone. IoU over frames 0–119.</p>
+<table>
+  <tr><th>Test</th><th>EfficientTAM-S</th><th>EfficientTAM-Ti</th><th>SAM2.1</th></tr>
+  <tr><td>Both objects on frame 0: IoU of boy and girl</td><td class="n">1.000, 1.000</td><td class="n">0.983, 1.000</td><td class="n">1.000, 1.000</td></tr>
+  <tr><td>Girl added on frame 30: IoU of boy; grids on frames 29 and 30</td><td class="n">1.000; 1, 2</td><td class="n">0.983; 1, 2</td><td class="n">0.999; 1, 2</td></tr>
+  <tr><td>Girl from the dress point, add points on object 2 at frame 2: girl IoU with the box track; boy IoU</td><td class="n">0.989 → 0.986; 1.000</td><td class="n">0.331 → 0.981; 0.982</td><td class="n">0.335 → 0.985; 0.998</td></tr>
+</table>
+<p>The page test used Chromium with the earlier clip as the camera, and WebKit with a canvas stream. In both, a Cmd+click or Ctrl+click added object 2. The chip of object 2 became the picked object. After a click on chip 1, an add point went to object 1.</p>
+
+<p>Test results for item 3. The query goes through the server function <code>step()</code> with LLMDet tiny. Host: spark2 for SAM2.1, spark3 for EfficientTAM-S.</p>
+<table>
+  <tr><th>Test</th><th>EfficientTAM-S</th><th>SAM2.1</th></tr>
+  <tr><td><code>boy . girl</code> on frame 0: objects, IoU with the tracks from the reference boxes (100 frames)</td><td class="n">2; girl 0.992, boy 0.998</td><td class="n">2; girl 0.996, boy 0.995</td></tr>
+  <tr><td><code>giraffe</code> on a track with one object</td><td class="n">found []; 1 object stays</td><td class="n">found []; 1 object stays</td></tr>
+  <tr><td><code>pillow</code> in <b>Object</b> mode on a track with the boy</td><td class="n">2 pillows added (3 objects)</td><td class="n">3 pillows added at threshold 0.30</td></tr>
+  <tr><td>Detection frame; next 50 frames with two objects</td><td class="n">197 ms; 59.6 FPS</td><td class="n">210 ms; 13.1 FPS</td></tr>
+</table>
+<p>The page test used Chromium with the earlier clip, and WebKit with a canvas stream. In Chromium, <code>girl</code> gave the chip "1 girl". <code>boy</code> in <b>Object</b> mode gave "2 boy", and the server ignored the second "boy" box on the girl. An empty query showed a help message. In WebKit, <code>giraffe</code> on a red circle gave "Nothing found" at threshold 0.35. Neither engine had page errors.</p>
+
+<p>Test results for item 4. Each test goes through the server functions <code>remove()</code> and <code>step()</code>. Objects: boy (1), girl (2) and pillow (3) on the earlier clip. Object 2 is removed at frame 20. IoU is over frames 21–59 against the same objects in a run without removal.</p>
+<table>
+  <tr><th>Test</th><th>EfficientTAM-S (spark3)</th><th>SAM2.1 (spark2)</th></tr>
+  <tr><td>Object numbers before and after; number of grids after</td><td class="n">[1, 2, 3] → [1, 3]; 2</td><td class="n">[1, 2, 3] → [1, 3]; 2</td></tr>
+  <tr><td>Boy IoU, pillow IoU</td><td class="n">1.000, 1.000</td><td class="n">1.000, 1.000</td></tr>
+  <tr><td>Add point on object 3 after the removal: boy IoU; pillow area</td><td class="n">1.000; 1.29% → 4.20%</td><td class="n">0.999; 1.39% → 2.86%</td></tr>
+  <tr><td>Remove an object before its first frame</td><td class="n">removed, 1 grid</td><td class="n">removed, 1 grid</td></tr>
+  <tr><td>Remove the last object; then add objects again</td><td class="n">no track; new numbers 2, 3</td><td class="n">no track; new numbers 2, 3</td></tr>
+</table>
+<p>The page test used Chromium with the earlier clip and WebKit with a canvas stream. <b>×</b> on chip 1 removed object 1. Object 2 kept its number and its orange colour. <kbd>Delete</kbd> then removed object 2. Neither engine had page errors.</p>
+
+<p>Test results for item 8. Host: spark2 for <code>track.py</code>, spark3 for the live test and the personal data removal.</p>
+<table>
+  <tr><th>Test</th><th>Result</th></tr>
+  <tr><td>Regression, the earlier clip --point 200,300</td><td class="n">3.859% to 3.864% (unchanged code on <code>main</code>: 3.860% to 3.862%)</td></tr>
+  <tr><td>Two boxes in one run against one box in each run (frame-0 area)</td><td class="n">blue 1.927% / 1.925%; brown 1.248% / 1.248%</td></tr>
+  <tr><td><code>--text "garbage can . trash can"</code></td><td class="n">2 boxes (0.46, 0.45); both objects in all 321 frames</td></tr>
+  <tr><td>SAM3, two boxes</td><td class="n">2.4 FPS; both objects in all frames</td></tr>
+  <tr><td>Live text test after the detector moved to <code>detector.py</code></td><td class="n">IoU 0.991 and 0.994 (unchanged)</td></tr>
+  <tr><td>Personal data removal of the original garbage cans clip</td><td class="n">2 subject objects; tags left: none; a detection of its own on each cart in all 321 frames; private directory deleted</td></tr>
+  <tr><td>Launcher: output path is the source clip</td><td class="n">refused (exit code 2)</td></tr>
+  <tr><td>Launcher: clip in the project folder, name <code>Clip [1]*.mov</code></td><td class="n">not synced to spark2</td></tr>
+  <tr><td><code>track.py</code> colours for 40 objects</td><td class="n">40 different colours</td></tr>
+</table>
+<p>Test results for item 6. Each test calls <code>track()</code> with EfficientTAM-S on the earlier clip (<code>tests/test_fix.py</code>, spark2). The points come from the girl track on the corrected frame.</p>
+<table>
+  <tr><th>Test</th><th>Result</th></tr>
+  <tr><td>Point on the boy, two add points on the girl at frame 5</td><td class="n">The track moves to the girl: more than 80% of the girl is covered after frame 10. Frames 0–4 do not change.</td></tr>
+  <tr><td>The same, then two remove points on the girl at frame 40</td><td class="n">Less than 20% of the girl is covered after frame 45</td></tr>
+  <tr><td>Boy (object 1) and dress point (object 2), add points on object 2 at frame 2</td><td class="n">Girl IoU above 0.9; boy IoU above 0.95</td></tr>
+  <tr><td><code>--fix-box</code> on the girl at frame 30 of a boy track</td><td class="n">IoU with the girl track above 0.8 after frame 35; frames 0–29 do not change</td></tr>
+  <tr><td>CLI: <code>--fix</code> with <code>--model sam3</code>, a bad sign, object 0, a frame after the end, an object that does not exist</td><td class="n">Refused (exit code 2)</td></tr>
+  <tr><td>Before the memory fix: a box at frame 30 with the old mask as input and the old memory kept</td><td class="n">No effect (IoU 0.01 with the girl): the old mask and memory override the box</td></tr>
+</table>
+<p>Test results for item 9. Host: spark2 with EfficientTAM-S for the full suite (34 tests), spark3 with SAM2.1 for <code>test_tracker.py</code> and <code>test_ws.py</code>. The browser checks used the live server on spark2.</p>
+<table>
+  <tr><th>Test</th><th>Result</th></tr>
+  <tr><td>Connection with <code>Origin: http://evil.example</code></td><td>HTTP 403</td></tr>
+  <tr><td>Page from a <code>data:</code> URL in Chromium opens a WebSocket to the server</td><td>Refused (close code 1006)</td></tr>
+  <tr><td>Seven text messages that are not valid: not JSON, a number, a point without <code>y</code>, a box with 3 values, a list as model, a string as object number, object 0</td><td>Seven <code>message_error</code> replies. The connection stays, and the next frame has no objects.</td></tr>
+  <tr><td>Tracker raises an exception on one frame</td><td>Reply "tracking failed, track cleared". The next frame has no objects.</td></tr>
+  <tr><td>A viewer tracks one object and closes. A new viewer connects.</td><td>The first frame of the new viewer has no objects.</td></tr>
+  <tr><td>Correction tests after the change to <code>as_cond_frame()</code></td><td>EfficientTAM-S: all pass. SAM2.1: all pass, with the known skip (item 1).</td></tr>
+  <tr><td>Personal data removal on <code>garbage_cans.mp4</code></td><td>More than 0 pixelated boxes, no tags left, 321 frames</td></tr>
+  <tr><td><code>tests/page_check.py</code></td><td>Chromium: ok. WebKit: ok.</td></tr>
+  <tr><td>Full suite</td><td>spark2: 34 of 34 OK. spark3 (SAM2.1, two files): 20 OK, 1 skipped.</td></tr>
+</table>
+<p>Test results for item 5. Host: spark2, EfficientTAM-S, <code>--redetect 15</code>.</p>
+<table>
+  <tr><th>Test</th><th>Result</th></tr>
+  <tr><td><code>albatross.mp4</code>, right bird covered for 30 frames, full frame covered from frame 90</td><td>The right bird gets a track after frame 30. All tracks end after the frame is covered. No more than 4 objects in all.</td></tr>
+  <tr><td>Fake tracker with one mask that covers the frame</td><td>The track ends, and the frame shows no colour from that mask.</td></tr>
+  <tr><td>Motorway clip, 300 frames, <code>car . truck</code>, threshold 0.30</td><td>52 objects in all, at most 44 at a time, 11 tracks ended, 217 duplicates removed, 2.0 FPS. A road sign is tracked as a vehicle.</td></tr>
+  <tr><td>Team-sport clip, 243 frames (10.5)</td><td>27 objects in all, 78 duplicates and 5 background masks removed, 2.8 FPS. Masks join in the pile.</td></tr>
+  <tr><td>First version: a box that contains most of a mask is a known box</td><td>Wrong: on the earlier clip the girl did not get a track, because her box contains the mask of the boy. The rule was removed.</td></tr>
+</table>
+
+<p>Test results for item 10. Host: spark2 for EfficientTAM-S, spark3 for SAM2.1 and EfficientTAM-Ti. Regression value on <code>albatross.mp4 --point 470,260</code>: 3.022% to 3.038%. The test accepts 3.015% to 3.045%.</p>
+<table>
+  <tr><th>Test on <code>albatross.mp4</code></th><th>EfficientTAM-S</th><th>SAM2.1</th><th>EfficientTAM-Ti</th></tr>
+  <tr><td>Two add points on the other bird at frame 40</td><td>The track moves to that bird.</td><td>Ignored (test skipped).</td><td>Ignored (test skipped).</td></tr>
+  <tr><td>A box round both birds</td><td colspan="3">One bird only: SAM selects one object, so the test of a mask with two areas from the earlier clip cannot run here. A test of the remove function on part of a bird replaces it.</td></tr>
+  <tr><td>Two remove points on the left bird at frame 40</td><td>40% of the bird stays. Frames 0 to 39 do not change.</td><td>6% of the bird stays. Frames 0 to 39 do not change.</td><td>64% of the bird stays. Frames 0 to 39 do not change.</td></tr>
+  <tr><td>A point on the wing tip</td><td>93% of the bird.</td><td>46% of the bird (1.3% of the frame). Two add points give the full bird (2.6%).</td><td>Not measured.</td></tr>
+  <tr><td>Query <code>dark bird</code></td><td colspan="3">Two objects, IoU of 0.9 or more with the box tracks (SAM2.1: 0.91).</td></tr>
+</table>
+
+</main>
+</body>
+</html>

@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Track Anything</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #0c0e12; --panel: #14181f; --raise: #1b2029; --line: #262c37;
+    --fg: #e8ebf1; --muted: #8b93a3; --accent: #3b9eff;  /* accent = mask colour rgb(30,144,255), slightly lifted */
+    --ok: #3ecf8e; --warn: #f5b041; --bad: #f2545b;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--fg);
+         font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+
+  header { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+           padding: 14px 24px; border-bottom: 1px solid var(--line); }
+  h1 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: .01em; }
+  h1 small { margin-left: 8px; color: var(--muted); font-weight: 400; font-size: 13px; }
+  .pill { display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px; border: 1px solid var(--line);
+          border-radius: 999px; background: var(--panel); color: var(--muted); font-size: 13px; white-space: nowrap; }
+  .pill::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--dot, var(--muted)); }
+  .pill[data-state=live] { --dot: var(--ok); color: var(--fg); }
+  .pill[data-state=busy] { --dot: var(--accent); }
+  .pill[data-state=wait] { --dot: var(--warn); }
+  .pill[data-state=down] { --dot: var(--bad); }
+  .pill[data-state=busy]::before, .pill[data-state=wait]::before { animation: pulse 1.2s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: .3; } }
+
+  main { display: grid; grid-template-columns: minmax(0, 1fr) 288px; gap: 20px; align-items: start;
+         max-width: 1340px; margin: 0 auto; padding: 20px 24px; }
+  @media (max-width: 880px) { main { grid-template-columns: 1fr; padding: 16px; } header { padding: 12px 16px; } }
+  @media (max-width: 520px) { h1 small { display: none; } }
+
+  .stage { position: relative; aspect-ratio: 4 / 3; border: 1px solid var(--line); border-radius: 12px;
+           overflow: hidden; background: #000; }
+  .stage video, .stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  #overlay { cursor: crosshair; touch-action: none; }
+  .hint { position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); padding: 8px 14px;
+          border-radius: 999px; background: rgb(12 14 18 / .72); backdrop-filter: blur(8px);
+          color: var(--fg); font-size: 13px; pointer-events: none; white-space: nowrap; transition: opacity .2s; }
+  .hint.off { opacity: 0; }
+  .veil { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 12px;
+          background: rgb(12 14 18 / .6); backdrop-filter: blur(2px); pointer-events: none; text-align: center; }
+  .veil p { margin: 0; } .veil small { color: var(--muted); }
+  .spin { width: 28px; height: 28px; border: 3px solid var(--line); border-top-color: var(--accent);
+          border-radius: 50%; animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(1turn); } }
+  @media (prefers-reduced-motion: reduce) { .spin, .pill::before { animation: none !important; } }
+  .notice { min-height: 1.45em; margin: 10px 2px 0; color: var(--muted); font-size: 13px; }
+  .notice.bad { color: var(--bad); }
+
+  aside { display: grid; gap: 16px; }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
+  h2 { margin: 0 0 10px; color: var(--muted); font-size: 12px; font-weight: 500; text-transform: uppercase;
+       letter-spacing: .06em; }
+  fieldset { display: grid; gap: 6px; margin: 0; padding: 0; border: 0; min-width: 0; }
+  fieldset:disabled { opacity: .55; }
+  .model { position: relative; display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+           padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--raise);
+           cursor: pointer; transition: border-color .15s, background .15s; }
+  .model:hover { border-color: #39414f; }
+  .model:has(input:checked) { border-color: var(--accent); background: rgb(59 158 255 / .12); }
+  .model:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .model input { position: absolute; opacity: 0; pointer-events: none; }
+  .model .hint2 { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+  fieldset:disabled .model { cursor: progress; }
+
+  button { width: 100%; padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--raise);
+           color: var(--fg); font: inherit; cursor: pointer; display: flex; justify-content: space-between; }
+  button:hover { border-color: #39414f; }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  kbd { padding: 0 6px; border: 1px solid var(--line); border-radius: 4px; color: var(--muted); font: 12px ui-monospace, monospace; }
+  .seg { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-bottom: 10px; padding: 3px;
+         border: 1px solid var(--line); border-radius: 8px; background: var(--raise); }
+  .seg label { padding: 6px 4px; border-radius: 6px; text-align: center; font-size: 13px; cursor: pointer; }
+  .seg label:has(input:checked) { background: var(--accent); color: #fff; }
+  .seg label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .seg input { position: absolute; opacity: 0; pointer-events: none; }
+  .find { display: flex; gap: 6px; margin-bottom: 10px; }
+  .find input { flex: 1; min-width: 0; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px;
+                background: var(--raise); color: var(--fg); font: inherit; font-size: 13px; }
+  .find input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .find button { width: auto; }
+  .objs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .objs:empty { display: none; }
+  .chip { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; background: var(--raise); }
+  .chip:has(button[aria-pressed=true]) { border-color: var(--fg); }
+  .objs button { width: auto; gap: 6px; align-items: center; padding: 4px 8px; border: 0; background: none;
+                 font-size: 12px; font-variant-numeric: tabular-nums; }
+  .objs .x { padding: 4px 7px 4px 2px; color: var(--muted); }
+  .objs .x:hover { color: var(--fg); }
+  .sw { width: 10px; height: 10px; border-radius: 3px; }
+  .help { margin: 10px 0 0; color: var(--muted); font-size: 13px; }
+
+  dl { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 10px; margin: 0; }
+  dt { color: var(--muted); font-size: 12px; }
+  dd { margin: 2px 0 0; font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  dd small { margin-left: 2px; color: var(--muted); font-size: 12px; font-weight: 400; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Track Anything <small>Mac camera → spark2</small></h1>
+  <span id="conn" class="pill" data-state="wait" role="status">Starting camera…</span>
+</header>
+<main>
+  <div>
+    <div class="stage" id="stage">
+      <video id="cam" autoplay playsinline muted></video>
+      <canvas id="mask" aria-hidden="true"></canvas>
+      <canvas id="overlay" aria-label="Camera view: click an object or drag a box to track it"></canvas>
+      <div id="hint" class="hint">Click an object to track it · drag to draw a box</div>
+      <div id="veil" class="veil" hidden><div class="spin"></div><p id="veilText">Loading…</p>
+        <small>First load of a model can take a minute</small></div>
+    </div>
+    <p id="notice" class="notice" role="alert"></p>
+  </div>
+  <aside>
+    <section>
+      <h2 id="modelsTitle">Model</h2>
+      <fieldset id="models" aria-labelledby="modelsTitle" disabled></fieldset>
+    </section>
+    <section>
+      <h2 id="clickTitle">Selection</h2>
+      <div class="seg" role="radiogroup" aria-labelledby="clickTitle">
+        <label title="Click starts a new track"><input type="radio" name="click" value="new" checked>New</label>
+        <label title="Click adds another object (Cmd/Ctrl+click)"><input type="radio" name="click" value="object">Object</label>
+        <label title="Click adds an area to the track (Shift+click)"><input type="radio" name="click" value="add">Add</label>
+        <label title="Click removes an area from the track (Alt+click)"><input type="radio" name="click" value="remove">Remove</label>
+      </div>
+      <form id="find" class="find" autocomplete="off">
+        <input id="query" type="text" maxlength="200" placeholder="Find by text: boy . red cup"
+               aria-label="Find objects by text. Separate names with a dot." enterkeyhint="search">
+        <button type="submit">Find</button>
+      </form>
+      <div id="objs" class="objs" aria-label="Tracked objects: pick the one that Add and Remove change"></div>
+      <button id="clear" type="button">Clear selection <kbd>Esc</kbd></button>
+      <p class="help">Type names and push <kbd>Enter</kbd> to find objects (Object mode adds them).
+        <kbd>Cmd</kbd>/<kbd>Ctrl</kbd>+click adds an object (up to 8), <kbd>Shift</kbd>+click adds an area
+        to the picked object, <kbd>Alt</kbd>+click removes one. <kbd>×</kbd> on a chip or <kbd>Delete</kbd> stops tracking that object. A box starts a new track, or a new object in Object mode.
+        Switching models clears the selection.</p>
+    </section>
+    <section>
+      <h2>Performance</h2>
+      <dl>
+        <div><dt>Throughput</dt><dd id="fps">–</dd></div>
+        <div><dt>Round trip</dt><dd id="rtt">–</dd></div>
+        <div><dt>Server</dt><dd id="srv">–</dd></div>
+        <div><dt>Mask</dt><dd id="area">–</dd></div>
+      </dl>
+    </section>
+  </aside>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const cam = $('cam'), overlay = $('overlay'), octx = overlay.getContext('2d');
+const cap = document.createElement('canvas'), cctx = cap.getContext('2d');
+let ws = null, info = null, drag = null, models = [], n = 0, t0 = performance.now(), sentAt = 0, active = 0;  // picked object id
+let query = '', searching = false, searchId = 0;  // last query (for notices); one search at a time; its id
+const full = () => info?.areas?.length >= PALETTE.length && (notice(`Up to ${PALETTE.length} objects.`, true), true);
+const PALETTE = [[30, 144, 255], [255, 149, 0], [52, 199, 89], [255, 45, 146],  // one colour per object, max 8
+                 [255, 214, 10], [175, 82, 222], [48, 176, 199], [255, 69, 58]];
+
+const pill = (state, text) => { $('conn').dataset.state = state; $('conn').textContent = text; };
+const notice = (text, bad = false) => { $('notice').textContent = text; $('notice').classList.toggle('bad', bad); };
+const stat = (id, v, unit) => { $(id).replaceChildren(v, ...(unit ? [Object.assign(document.createElement('small'), { textContent: unit })] : [])); };
+const label = (id) => models.find((m) => m.id === id)?.label ?? id;
+const open = () => ws && ws.readyState === WebSocket.OPEN;
+
+// Mask layer: the server sends low-res logits as raw float16. The GPU upsamples them bilinearly,
+// thresholds and colours them, which is what the server-side post-processing did before, minus the PNG round trip.
+const gl = $('mask').getContext('webgl2', { premultipliedAlpha: true });
+function glProgram() {
+  const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; };
+  const p = gl.createProgram();
+  gl.attachShader(p, sh(gl.VERTEX_SHADER, `#version 300 es
+    out vec2 uv;
+    void main() { vec2 v = vec2(gl_VertexID & 1, gl_VertexID >> 1); uv = vec2(v.x, v.y);
+                  gl_Position = vec4(v.x * 2. - 1., 1. - v.y * 2., 0., 1.); }`));
+  gl.attachShader(p, sh(gl.FRAGMENT_SHADER, `#version 300 es
+    precision highp float; precision highp sampler2DArray;
+    in vec2 uv; uniform sampler2DArray m; uniform int n; uniform vec3 pal[8]; uniform int col[8]; out vec4 c;
+    void main() {  // each pixel goes to the object with the highest logit above 0, so masks do not overlap
+      float best = 0.; int k = -1;
+      for (int i = 0; i < 8; i++) { if (i >= n) break; float v = texture(m, vec3(uv, float(i))).r; if (v > best) { best = v; k = i; } }
+      c = k < 0 ? vec4(0) : vec4(pal[col[k]] / 255., 1.) * (140. / 255.); }`));  // col: colour of layer k
+  gl.linkProgram(p);
+  if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
+  gl.useProgram(p);
+  gl.bindTexture(gl.TEXTURE_2D_ARRAY, gl.createTexture());  // one layer per object
+  gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.uniform3fv(gl.getUniformLocation(p, 'pal'), PALETTE.flat());
+  gl.nLoc = gl.getUniformLocation(p, 'n'); gl.colLoc = gl.getUniformLocation(p, 'col');
+  gl.pixelStorei(gl.UNPACK_ALIGNMENT, 2);  // float16 rows of any width (SAM3 grid is 288)
+}
+// Palette slot of each object id: a new object takes the lowest free slot, and keeps it until it goes away, so
+// active objects never share a colour and an object keeps its colour when another one is removed.
+const slots = new Map();
+function assignColours(ids) {
+  for (const id of [...slots.keys()]) if (!ids.includes(id)) slots.delete(id);
+  for (const id of ids) {
+    if (slots.has(id)) continue;
+    const used = new Set(slots.values());
+    slots.set(id, [...PALETTE.keys()].find((k) => !used.has(k)) ?? 0);
+  }
+}
+const colour = (id) => slots.get(id) ?? 0;
+function showMask(bytes, w, h, n) {  // bytes = null clears; else n stacked (h, w) float16 grids
+  gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+  gl.clear(gl.COLOR_BUFFER_BIT);
+  $('hint').classList.toggle('off', !!bytes);
+  if (!bytes) return;
+  gl.texImage3D(gl.TEXTURE_2D_ARRAY, 0, gl.R16F, w, h, n, 0, gl.RED, gl.HALF_FLOAT, bytes);
+  gl.uniform1i(gl.nLoc, n);
+  gl.uniform1iv(gl.colLoc, Int32Array.from({ length: 8 }, (_, k) => colour(info.ids?.[k] ?? k + 1)));
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+}
+
+function draw() {  // live camera is the <video>; this layer only holds the drag box
+  octx.clearRect(0, 0, overlay.width, overlay.height);
+  if (drag && drag.x1 !== undefined) {
+    const [x, y, w, h] = [drag.x0 * overlay.width, drag.y0 * overlay.height,
+                          (drag.x1 - drag.x0) * overlay.width, (drag.y1 - drag.y0) * overlay.height];
+    octx.fillStyle = 'rgb(59 158 255 / .12)'; octx.fillRect(x, y, w, h);
+    octx.strokeStyle = '#3b9eff'; octx.lineWidth = 2; octx.setLineDash([6, 4]); octx.strokeRect(x, y, w, h);
+  }
+  requestAnimationFrame(draw);
+}
+
+function sendFrame() {  // one frame in flight: no queue, lowest latency
+  if (!open()) return;
+  cctx.drawImage(cam, 0, 0, cap.width, cap.height);
+  cap.toBlob((b) => { if (b && open()) { sentAt = performance.now(); ws.send(b); } }, 'image/jpeg', 0.7);
+}
+
+function onReply() {
+  if (++n % 10 === 0) { const t = performance.now(); stat('fps', (10000 / (t - t0)).toFixed(1), 'FPS'); t0 = t; }
+  stat('srv', info.ms.toFixed(1), 'ms');
+  const a = info.areas, total = a.reduce((s, v) => s + v, 0);
+  stat('area', a.length ? (total * 100).toFixed(1) : '–', a.length ? '%' : '');
+  renderObjs(a, info.labels ?? [], info.ids ?? a.map((_, i) => i + 1));
+}
+
+function renderObjs(areas, labels, ids) {  // object chips; ids stay the same for the whole track
+  const box = $('objs');
+  if (box.dataset.ids !== ids.join()) {
+    const before = (box.dataset.ids || '').split(',').map(Number);
+    if (ids.some((id) => !before.includes(id))) active = ids[ids.length - 1];  // a new object becomes the picked one
+    if (!ids.includes(active)) active = ids[0] ?? 0;
+    box.dataset.ids = ids.join();
+    box.replaceChildren(...ids.map((id) => {
+      const chip = Object.assign(document.createElement('span'), { className: 'chip' });
+      const pick = Object.assign(document.createElement('button'), { type: 'button', onclick: () => { active = id; } });
+      const sw = Object.assign(document.createElement('span'), { className: 'sw' });
+      sw.style.background = `rgb(${PALETTE[colour(id)]})`;
+      pick.append(sw, document.createElement('span'));
+      const x = Object.assign(document.createElement('button'), { type: 'button', className: 'x', textContent: '×',
+        title: `Stop tracking object ${id} (Delete)`, onclick: () => removeObject(id) });
+      x.setAttribute('aria-label', `Remove object ${id}`);
+      chip.append(pick, x);
+      return chip;
+    }));
+  }
+  ids.forEach((id, i) => {
+    const pick = box.children[i].firstChild;
+    pick.lastChild.textContent = `${id}${labels[i] ? ' ' + labels[i] : ''} · ${(areas[i] * 100).toFixed(1)}%`;
+    pick.setAttribute('aria-pressed', String(id === active));
+  });
+}
+
+function removeObject(id) {  // the server drops it before the next frame; the other objects keep tracking
+  if (open() && id) { ws.send(JSON.stringify({ remove: id })); notice(`Removed object ${id}.`); }
+}
+
+function renderModels(active) {
+  $('models').replaceChildren(...models.map((m) => {
+    const row = document.createElement('label'), input = document.createElement('input');
+    row.className = 'model';
+    Object.assign(input, { type: 'radio', name: 'model', value: m.id, checked: m.id === active });
+    input.onchange = () => selectModel(m.id);
+    const name = Object.assign(document.createElement('span'), { textContent: m.label });
+    const hint = Object.assign(document.createElement('span'), { className: 'hint2', textContent: m.hint });
+    row.append(input, name, hint);
+    return row;
+  }));
+}
+
+function setActive(id) {
+  for (const r of document.querySelectorAll('input[name=model]')) r.checked = r.value === id;
+}
+
+function busy(on, text) {
+  $('veil').hidden = !on; $('models').disabled = on || !open();
+  if (on) { $('veilText').textContent = text; pill('busy', text); }
+}
+
+function selectModel(id) {
+  if (!open()) return;
+  ws.send(JSON.stringify({ model: id })); searching = false;  // the server drops a search that has not run
+  showMask(null); notice('');
+  busy(true, `Loading ${label(id)}…`);
+}
+
+function connect() {
+  ws = new WebSocket(`ws://${location.host}/ws`);
+  ws.binaryType = 'arraybuffer';
+  pill('wait', 'Connecting to spark2…');
+  ws.onopen = () => sendFrame();
+  ws.onmessage = (e) => {
+    if (typeof e.data !== 'string') { showMask(new Uint16Array(e.data), info.w, info.h, info.areas.length); return onReply(); }
+    const m = JSON.parse(e.data);
+    if (m.models) {  // hello: model list and the active one
+      models = m.models; renderModels(m.model); busy(false); notice('');
+      pill('live', `Live · ${label(m.model)}`); return;
+    }
+    if ('model' in m) {  // reply to a model switch; on error the server keeps the old model
+      busy(false); setActive(m.model); pill('live', `Live · ${label(m.model)}`);
+      notice(m.error ? m.error : `Switched to ${label(m.model)}.`, !!m.error); return;
+    }
+    if ('message_error' in m) return notice(`Server: ${m.message_error}`, true);  // not a frame reply: no next frame
+    if ('find_error' in m && !('areas' in m)) {  // bad query or detector load failure
+      if (m.find_id === searchId) { searching = false; notice(m.find_error, true); }
+      return;
+    }
+    info = m;
+    assignColours(m.ids ?? []);
+    if (m.found && m.find_id === searchId) foundReply(m.found, m.find_error);  // ignore a replaced search
+    stat('rtt', (performance.now() - sentAt).toFixed(0), 'ms');
+    sendFrame();  // server is free now: encode the next frame while this mask is still arriving
+    if (m.error) {  // the frame failed, and with it the search that ran on it (find_id), if any
+      if (m.find_id === searchId) searching = false;
+      return notice(`Server: ${m.error}`, true);
+    }
+    if (!m.areas.length) { showMask(null); onReply(); }  // else the raw masks follow
+  };
+  ws.onclose = (e) => {
+    searching = false;
+    busy(false); $('models').disabled = true; showMask(null);
+    if (e.code === 4001) {  // live.BUSY: the server serves one viewer (one shared tracker); retry until it is free
+      pill('down', 'Busy · retrying');
+      notice('Another tab or browser is connected. Close it to use this page.', true);
+    } else pill('down', 'spark2 offline · retrying');
+    setTimeout(connect, 2000);
+  };
+}
+
+function foundReply(found, error) {  // the detector ran on this frame; each box is now an object in score order
+  searching = false;
+  if (error) return notice(error, true);
+  notice(found.length ? `Found ${found.length}: ${found.map((f) => `${f.label} ${f.score.toFixed(2)}`).join(', ')}`
+    : `Nothing found for "${query}". Try one simple name, for example "cup".`, !found.length);
+}
+
+$('find').onsubmit = (e) => {
+  e.preventDefault();
+  const q = $('query').value.trim();
+  if (!open()) return;
+  if (!q) return notice('Type one or more names, for example "cup" or "boy . red cup".', true);
+  const add = document.querySelector('input[name=click]:checked').value === 'object';
+  if (searching) return notice(`Wait for the search for "${query}" to finish.`, true);
+  if (add && full()) return;
+  query = q; searching = true; searchId += 1;
+  ws.send(JSON.stringify(add ? { text: q, obj: 'new', id: searchId } : { text: q, id: searchId }));
+  notice(`Finding "${q}"… The first search loads the detector.`);
+};
+
+const norm = (e) => { const r = overlay.getBoundingClientRect();
+  return [Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)), Math.min(1, Math.max(0, (e.clientY - r.top) / r.height))]; };
+overlay.onpointerdown = (e) => { overlay.setPointerCapture(e.pointerId); const [x, y] = norm(e); drag = { x0: x, y0: y }; };
+overlay.oncontextmenu = (e) => e.preventDefault();  // Ctrl+click on a Mac is a right click
+overlay.onpointermove = (e) => { if (drag) [drag.x1, drag.y1] = norm(e); };
+overlay.onpointerup = (e) => {
+  const [x, y] = norm(e), d = drag; drag = null;
+  if (!d || !open()) return;
+  const box = [Math.min(d.x0, x), Math.min(d.y0, y), Math.max(d.x0, x), Math.max(d.y0, y)];
+  const mode = e.shiftKey ? 'add' : e.altKey ? 'remove' : e.metaKey || e.ctrlKey ? 'object'
+    : document.querySelector('input[name=click]:checked').value;
+  const click = box[2] - box[0] < 0.02 && box[3] - box[1] < 0.02;
+  let msg = click ? { x, y } : { box };
+  if (mode === 'object') {
+    if (full()) return;
+    msg.obj = 'new';
+  } else if (click && mode !== 'new') msg = { x, y, add: mode === 'add' ? 1 : 0, obj: active };  // fix the picked object
+  ws.send(JSON.stringify(msg));
+  if (!('add' in msg)) searching = false;  // a new prompt replaces a search that has not run (a correction does not)
+  notice('');
+};
+const clear = () => { if (open()) { ws.send('{}'); showMask(null); searching = false; } };
+$('clear').onclick = clear;
+addEventListener('keydown', (e) => {
+  if (document.activeElement === $('query')) { if (e.key === 'Escape') $('query').blur(); return; }  // typing
+  if (e.key === 'Delete' || e.key === 'Backspace') removeObject(active);
+  if (e.key === 'Escape') { drag = null; clear(); }
+});
+
+if (!gl) {
+  pill('down', 'WebGL2 unavailable'); notice('The mask overlay needs WebGL2.', true);
+} else if (!navigator.mediaDevices?.getUserMedia) {
+  pill('down', 'Camera unavailable'); notice('Open this page as http://localhost:8765 (not an IP address).', true);
+} else {
+  navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 640 }, height: { ideal: 480 } }, audio: false })
+    .then((s) => { cam.srcObject = s; return cam.play(); })
+    .then(() => {
+      const scale = Math.min(1, 640 / cam.videoWidth);  // send at most 640 px wide, keep the camera's aspect
+      cap.width = overlay.width = gl.canvas.width = Math.round(cam.videoWidth * scale);
+      cap.height = overlay.height = gl.canvas.height = Math.round(cam.videoHeight * scale);
+      $('stage').style.aspectRatio = `${cam.videoWidth} / ${cam.videoHeight}`;  // video fills it: no letterbox, masks align
+      glProgram();
+      requestAnimationFrame(draw);
+      connect();
+    })
+    .catch((err) => { pill('down', 'Camera blocked'); notice(`Camera error: ${err.name}: ${err.message}`, true); });
+}
+</script>
+</body>
+</html>

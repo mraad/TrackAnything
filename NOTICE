@@ -1,0 +1,29 @@
+TrackAnything
+Copyright 2026 mraad (https://github.com/mraad)
+
+Licensed under the Apache License, Version 2.0. See LICENSE.
+
+This project includes third-party material:
+
+configs/efficienttam_s_512x512.yaml, configs/efficienttam_ti_512x512.yaml
+  Copied from EfficientTAM (https://github.com/yformer/EfficientTAM), revision
+  abcd061, licensed under the Apache License, Version 2.0.
+
+data/albatross.mp4, and the images in docs/img/ named offline*.jpg and ui_*.jpg
+  Made from "Black-footed albatross mating dance" by USFWS Pacific Region, video by
+  volunteer Dan Rapp, public domain, via Wikimedia Commons:
+  https://commons.wikimedia.org/wiki/File:Schwarzfu%C3%9Falbatros_(Phoebastria_nigripes),_Paarungstanz_(Balz)_im_Midway_Atoll_National_Wildlife_Refuge.webm
+  Changes: audio removed, trimmed to 10 seconds from 0:08, resized, tracking masks
+  added to the images.
+
+docs/img/traffic.gif
+  Made from "Motorway A40 - on bridge above the traffic" by Kathinka Engels /
+  Sounds of Changes, licensed under CC BY 3.0
+  (https://creativecommons.org/licenses/by/3.0), via Wikimedia Commons:
+  https://commons.wikimedia.org/wiki/File:Motorway_A40_-_on_bridge_above_the_traffic.webm
+  Changes: audio removed, trimmed to 10 seconds from 0:06, resized, frame rate
+  reduced, tracking masks added. The license of this project does not apply to it.
+
+Models and dependencies are not part of this repository. They are downloaded when
+the project runs, and each has its own license. In particular, facebook/sam3 is a
+gated model under Meta's terms, and the CUDA packages are under NVIDIA's terms.
